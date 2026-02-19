@@ -1,0 +1,38 @@
+version: '3'
+
+vars:
+  COMPOSE_FILE: deploy/docker-compose.yml
+
+tasks:
+  up:
+    desc: "Поднять всю инфраструктуру и сервисы"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build
+
+  down:
+    desc: "Остановить и удалить все контейнеры"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} down
+
+  logs:
+    desc: "Смотреть логи всех сервисов"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f
+
+  # --- Service Account ---
+  run:account:
+    desc: "Локальный запуск Service Account (без Docker)"
+    dir: src/service-account
+    cmds:
+      - go run cmd/main.go
+
+  sqlc:account:
+    desc: "Генерация моделей БД через sqlc для Service Account"
+    dir: src/service-account
+    cmds:
+      - sqlc generate
+
+  logs:account:
+    desc: "Логи Service Account"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f service-account
