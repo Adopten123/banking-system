@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # ИНФРАСТРУКТУРА
+  # ==========================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: bank_postgres
+    environment:
+      POSTGRES_USER: bank_admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: accounts_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: bank_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bank.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: bank_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: bank_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rmq_admin
+      RABBITMQ_DEFAULT_PASS: secretpassword
+    ports:
+      - "5672:5672"   # Порт для общения сервисов
+      - "15672:15672" # Веб-интерфейс RabbitMQ (Management UI)
+    restart: unless-stopped
+
+  # ==========================================
+  # МИКРОСЕРВИСЫ
+  # ==========================================
+  service-account:
+    container_name: service_account
+    build:
+      context: ../src/service-account
+      dockerfile: Dockerfile
+    environment:
+      - DB_URL=postgres://bank_admin:secretpassword@postgres:5432/accounts_db?sslmode=disable
+      - REDIS_URL=redis:6379
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  api-gateway:
+    image: nginx:alpine
+    container_name: api_gateway
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - service-account
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
