@@ -1,9 +1,13 @@
 package postgres
 
-import _ "github.com/Adopten123/banking-system/service-account/internal/domain"
+import (
+	_ "github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 type AccountRepo struct {
-	// db *pgxpool.Pool
+	db      *pgxpool.Pool
+	queries *Queries
 }
 
 func NewAccountRepo() *AccountRepo {
