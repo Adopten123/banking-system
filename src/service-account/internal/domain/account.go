@@ -1,14 +1,16 @@
 package domain
 
+import "context"
+
 type Account struct {
 	ID      int
 	Balance float64
 }
 
 type AccountRepository interface {
-	Ping() error
+	Ping(ctx context.Context) error
 }
 
 type AccountService interface {
-	CheckHealth() string
+	CheckHealth(ctx context.Context) string
 }
