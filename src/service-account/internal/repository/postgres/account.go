@@ -30,40 +30,43 @@ func (r *AccountRepo) Ping(ctx context.Context) error {
 }
 
 func (r *AccountRepo) Create(ctx context.Context, acc *domain.Account) (*domain.Account, error) {
-	var pubID, usrID pgtype.UUID
-	if err := pubID.Scan(acc.PublicID.String()); err != nil {
-		return nil, fmt.Errorf("invalid public_id: %w", err)
+	// Open transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	if err := usrID.Scan(acc.UserID.String()); err != nil {
-		return nil, fmt.Errorf("invalid user_id: %w", err)
-	}
+	defer tx.Rollback(ctx)
 
-	arg := CreateAccountParams{
-		PublicID:     pubID,
-		UserID:       usrID,
+	qtx := r.queries.WithTx(tx)
+
+	dbAcc, err := qtx.CreateAccount(ctx, CreateAccountParams{
+		PublicID:     pgtype.UUID{Bytes: acc.PublicID, Valid: true},
+		UserID:       pgtype.UUID{Bytes: acc.UserID, Valid: true},
 		TypeID:       pgtype.Int4{Int32: acc.TypeID, Valid: true},
 		StatusID:     pgtype.Int4{Int32: acc.StatusID, Valid: true},
 		CurrencyCode: pgtype.Text{String: acc.CurrencyCode, Valid: true},
 		Name:         pgtype.Text{String: acc.Name, Valid: true},
-	}
+	})
 
-	dbAcc, err := r.queries.CreateAccount(ctx, arg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create account in db: %w", err)
+		return nil, fmt.Errorf("failed to insert account: %w", err)
 	}
 
-	return &domain.Account{
-		ID:           dbAcc.ID,
-		PublicID:     acc.PublicID,
-		UserID:       acc.UserID,
-		TypeID:       dbAcc.TypeID.Int32,
-		StatusID:     dbAcc.StatusID.Int32,
-		CurrencyCode: dbAcc.CurrencyCode.String,
-		Name:         dbAcc.Name.String,
-		Version:      dbAcc.Version.Int32,
-		CreatedAt:    dbAcc.CreatedAt.Time,
-		UpdatedAt:    dbAcc.UpdatedAt.Time,
-	}, nil
+	err = qtx.CreateAccountBalance(ctx, dbAcc.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert account balance: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	acc.ID = dbAcc.ID
+	acc.Version = dbAcc.Version.Int32
+	acc.CreatedAt = dbAcc.CreatedAt.Time
+	acc.UpdatedAt = dbAcc.UpdatedAt.Time
+
+	return acc, nil
 }
 
 func (r *AccountRepo) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*domain.Account, error) {

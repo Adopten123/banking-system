@@ -54,6 +54,16 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	return i, err
 }
 
+const createAccountBalance = `-- name: CreateAccountBalance :exec
+INSERT INTO account_balances (account_id, balance, credit_limit, updated_at)
+VALUES ($1, 0, 0, now())
+`
+
+func (q *Queries) CreateAccountBalance(ctx context.Context, accountID int64) error {
+	_, err := q.db.Exec(ctx, createAccountBalance, accountID)
+	return err
+}
+
 const getAccountByID = `-- name: GetAccountByID :one
 SELECT id, public_id, user_id, type_id, status_id, currency_code, name, version, created_at, updated_at FROM accounts
 WHERE id = $1 LIMIT 1
