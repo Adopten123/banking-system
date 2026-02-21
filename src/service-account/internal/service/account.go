@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/google/uuid"
 )
 
 type AccountService struct {
@@ -22,4 +24,31 @@ func (s *AccountService) CheckHealth(ctx context.Context) string {
 		return "error"
 	}
 	return "database and service are ok"
+}
+
+func (s *AccountService) CreateAccount(
+	ctx context.Context,
+	userID uuid.UUID,
+	typeID int32,
+	currencyCode, name string,
+) (*domain.Account, error) {
+
+	publicID := uuid.New()
+	const defaultStatusID = 1
+
+	acc := &domain.Account{
+		PublicID:     publicID,
+		UserID:       userID,
+		TypeID:       typeID,
+		StatusID:     defaultStatusID,
+		CurrencyCode: currencyCode,
+		Name:         name,
+	}
+
+	createdAcc, err := s.repo.Create(ctx, acc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account: %w", err)
+	}
+
+	return createdAcc, nil
 }

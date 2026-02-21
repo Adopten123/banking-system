@@ -1,0 +1,6 @@
+db:
+  dsn: "postgresql://bank_admin:secretpassword@postgres:5432/accounts_db?sslmode=disable"
+  max_conns: 20
+  min_conns: 5
+  max_conn_idle_time: 15m
+  max_conn_lifetime: 1h

@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_DB: accounts_db
     ports:
-      - "5432:5432"
+      - "5499:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
     image: dpage/pgadmin4
     container_name: bank_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@bank.local
+      PGADMIN_DEFAULT_EMAIL: admin@bank.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
@@ -61,7 +61,7 @@ services:
       context: ../src/service-account
       dockerfile: Dockerfile
     environment:
-      - DB_URL=postgres://bank_admin:secretpassword@postgres:5432/accounts_db?sslmode=disable
+      - CONFIG_PATH=config/prod.yaml
       - REDIS_URL=redis:6379
     ports:
       - "8081:8080"

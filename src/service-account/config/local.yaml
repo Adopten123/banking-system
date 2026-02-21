@@ -1,5 +1,5 @@
 db:
-  dsn: "postgresql://bank_admin:secretpassword@localhost:5432/accounts_db?sslmode=disable"
+  dsn: "postgresql://bank_admin:secretpassword@localhost:5499/accounts_db?sslmode=disable"
   max_conns: 20
   min_conns: 5
   max_conn_idle_time: 15m

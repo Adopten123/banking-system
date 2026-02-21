@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	_ "github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -21,4 +24,41 @@ func NewAccountRepo(db *pgxpool.Pool) *AccountRepo {
 
 func (r *AccountRepo) Ping(ctx context.Context) error {
 	return r.db.Ping(ctx)
+}
+
+func (r *AccountRepo) Create(ctx context.Context, acc *domain.Account) (*domain.Account, error) {
+	var pubID, usrID pgtype.UUID
+	if err := pubID.Scan(acc.PublicID.String()); err != nil {
+		return nil, fmt.Errorf("invalid public_id: %w", err)
+	}
+	if err := usrID.Scan(acc.UserID.String()); err != nil {
+		return nil, fmt.Errorf("invalid user_id: %w", err)
+	}
+
+	arg := CreateAccountParams{
+		PublicID:     pubID,
+		UserID:       usrID,
+		TypeID:       pgtype.Int4{Int32: acc.TypeID, Valid: true},
+		StatusID:     pgtype.Int4{Int32: acc.StatusID, Valid: true},
+		CurrencyCode: pgtype.Text{String: acc.CurrencyCode, Valid: true},
+		Name:         pgtype.Text{String: acc.Name, Valid: true},
+	}
+
+	dbAcc, err := r.queries.CreateAccount(ctx, arg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account in db: %w", err)
+	}
+
+	return &domain.Account{
+		ID:           dbAcc.ID,
+		PublicID:     acc.PublicID,
+		UserID:       acc.UserID,
+		TypeID:       dbAcc.TypeID.Int32,
+		StatusID:     dbAcc.StatusID.Int32,
+		CurrencyCode: dbAcc.CurrencyCode.String,
+		Name:         dbAcc.Name.String,
+		Version:      dbAcc.Version.Int32,
+		CreatedAt:    dbAcc.CreatedAt.Time,
+		UpdatedAt:    dbAcc.UpdatedAt.Time,
+	}, nil
 }
