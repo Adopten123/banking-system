@@ -23,9 +23,11 @@ type Account struct {
 type AccountRepository interface {
 	Ping(ctx context.Context) error
 	Create(ctx context.Context, account *Account) (*Account, error)
+	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
 }
 
 type AccountService interface {
 	CheckHealth(ctx context.Context) string
 	CreateAccount(ctx context.Context, userID uuid.UUID, typeID int32, currencyCode, name string) (*Account, error)
+	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
 }

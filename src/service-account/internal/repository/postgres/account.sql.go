@@ -76,3 +76,27 @@ func (q *Queries) GetAccountByID(ctx context.Context, id int64) (Account, error)
 	)
 	return i, err
 }
+
+const getAccountByPublicID = `-- name: GetAccountByPublicID :one
+SELECT id, public_id, user_id, type_id, status_id, currency_code, name, version, created_at, updated_at
+FROM accounts
+WHERE public_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAccountByPublicID(ctx context.Context, publicID pgtype.UUID) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccountByPublicID, publicID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.PublicID,
+		&i.UserID,
+		&i.TypeID,
+		&i.StatusID,
+		&i.CurrencyCode,
+		&i.Name,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

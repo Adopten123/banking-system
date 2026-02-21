@@ -9,3 +9,8 @@ RETURNING *;
 -- name: GetAccountByID :one
 SELECT * FROM accounts
 WHERE id = $1 LIMIT 1;
+
+-- name: GetAccountByPublicID :one
+SELECT id, public_id, user_id, type_id, status_id, currency_code, name, version, created_at, updated_at
+FROM accounts
+WHERE public_id = $1 LIMIT 1;

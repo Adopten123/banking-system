@@ -53,11 +53,19 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getAccountBalance(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
+	publicID, err := uuid.Parse(accountID)
+	if err != nil {
+		http.Error(w, "invalid account ID format", http.StatusBadRequest)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "getting balance for account " + accountID,
-		"status":  "not implemented yet",
-	})
+	acc, err := h.service.GetAccount(r.Context(), publicID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(acc)
 }
