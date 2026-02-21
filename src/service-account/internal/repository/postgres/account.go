@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	_ "github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -72,7 +74,10 @@ func (r *AccountRepo) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*d
 
 	dbAcc, err := r.queries.GetAccountByPublicID(ctx, pgUUID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrAccountNotFound
+		}
+		return nil, fmt.Errorf("database execution failed: %w", err)
 	}
 
 	return &domain.Account{

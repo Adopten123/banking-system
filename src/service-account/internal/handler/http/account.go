@@ -2,8 +2,10 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -19,14 +21,14 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	// Read JSON
 	var req CreateAccountRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
 	}
 
 	// Parse UserID
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		http.Error(w, "invalid user_id format", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid user_id format", err)
 		return
 	}
 
@@ -40,7 +42,7 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to create account", err)
 		return
 	}
 
@@ -55,13 +57,17 @@ func (h *Handler) getAccountBalance(w http.ResponseWriter, r *http.Request) {
 
 	publicID, err := uuid.Parse(accountID)
 	if err != nil {
-		http.Error(w, "invalid account ID format", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
 		return
 	}
 
 	acc, err := h.service.GetAccount(r.Context(), publicID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		if errors.Is(err, domain.ErrAccountNotFound) {
+			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "An unexpected error occurred", err)
 		return
 	}
 
