@@ -36,3 +36,13 @@ tasks:
     desc: "Логи Service Account"
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} logs -f service-account
+
+  migrate-up:account:
+    desc: "Накатить все миграции базы данных"
+    cmds:
+      - migrate -path src/service-account/migrations -database "postgresql://bank_admin:secretpassword@localhost:5499/accounts_db?sslmode=disable" up
+
+  migrate-down:account:
+    desc: "Откатить последнюю миграцию на 1 шаг"
+    cmds:
+      - migrate -path src/service-account/migrations -database "postgresql://bank_admin:secretpassword@localhost:5499/accounts_db?sslmode=disable" down 1
