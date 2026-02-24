@@ -17,6 +17,16 @@ type CreateAccountRequest struct {
 	Name         string `json:"name"`
 }
 
+// @Summary Создание нового счета
+// @Description Создает новый банковский счет для пользователя с нулевым балансом
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param request body CreateAccountRequest true "Данные для создания счета"
+// @Success 201 {object} domain.Account "Счет успешно создан"
+// @Failure 400 {object} map[string]string "Неверный запрос (ошибка валидации)"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/accounts [post]
 func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	// Read JSON
 	var req CreateAccountRequest
@@ -52,6 +62,16 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(acc)
 }
 
+// @Summary Получение информации о счете
+// @Description Возвращает текущий баланс, валюту и статус счета по его публичному ID
+// @Tags accounts
+// @Produce json
+// @Param id path string true "Public ID счета (UUID)"
+// @Success 200 {object} domain.Account "Информация о счете"
+// @Failure 400 {object} map[string]string "Неверный формат ID"
+// @Failure 404 {object} map[string]string "Счет не найден"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/accounts/{id} [get]
 func (h *Handler) getAccountBalance(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 

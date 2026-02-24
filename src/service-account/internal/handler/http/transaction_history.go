@@ -10,6 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// @Summary История транзакций (выписка)
+// @Description Возвращает список всех операций по указанному счету, отсортированный от новых к старым
+// @Tags accounts
+// @Produce json
+// @Param id path string true "Public ID счета (UUID)"
+// @Success 200 {array} domain.TransactionHistory "Список транзакций"
+// @Failure 400 {object} map[string]string "Неверный формат ID"
+// @Failure 404 {object} map[string]string "Счет не найден"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/accounts/{id}/transactions [get]
 func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 	accountIDParam := chi.URLParam(r, "id")
 	publicID, err := uuid.Parse(accountIDParam)

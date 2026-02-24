@@ -17,7 +17,7 @@ const defaultCfgPath = "config/local.yaml"
 // @title Banking System - Account Service API
 // @version 1.0
 // @description Микросервис для управления счетами и балансами.
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /
 func main() {
 	// Init cfg path

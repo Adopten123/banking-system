@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "github.com/Adopten123/banking-system/service-account/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -26,9 +27,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
-	))
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	r.Route("/api/system", func(r chi.Router) {
 		r.Get("/ping", h.ping)
