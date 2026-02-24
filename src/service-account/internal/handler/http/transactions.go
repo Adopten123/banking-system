@@ -15,6 +15,19 @@ type DepositRequest struct {
 	Amount string `json:"amount"`
 }
 
+// @Summary Пополнение счета
+// @Description Зачисляет средства на указанный счет. Требует передачи Idempotency-Key в заголовках.
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path string true "Public ID счета (UUID)"
+// @Param Idempotency-Key header string true "Уникальный ключ запроса"
+// @Param request body DepositRequest true "Сумма пополнения"
+// @Success 200 {object} map[string]string "Успешное пополнение"
+// @Failure 400 {object} map[string]string "Неверный запрос"
+// @Failure 404 {object} map[string]string "Счет не найден"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка"
+// @Router /api/accounts/{id}/deposit [post]
 func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	// Getting UUID from url
 	accountIDParam := chi.URLParam(r, "id")

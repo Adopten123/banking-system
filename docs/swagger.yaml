@@ -1,0 +1,68 @@
+basePath: /
+definitions:
+  src_service-account_internal_handler_http.DepositRequest:
+    properties:
+      amount:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Микросервис для управления счетами и балансами.
+  title: Banking System - Account Service API
+  version: "1.0"
+paths:
+  /api/accounts/{id}/deposit:
+    post:
+      consumes:
+      - application/json
+      description: Зачисляет средства на указанный счет. Требует передачи Idempotency-Key
+        в заголовках.
+      parameters:
+      - description: Public ID счета (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Уникальный ключ запроса
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Сумма пополнения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/src_service-account_internal_handler_http.DepositRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное пополнение
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Пополнение счета
+      tags:
+      - accounts
+swagger: "2.0"

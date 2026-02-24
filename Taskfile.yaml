@@ -46,3 +46,8 @@ tasks:
     desc: "Откатить последнюю миграцию на 1 шаг"
     cmds:
       - migrate -path src/service-account/migrations -database "postgresql://bank_admin:secretpassword@localhost:5499/accounts_db?sslmode=disable" down 1
+
+  swag:account:
+    desc: "Сгенерировать документацию Swagger"
+    cmds:
+      - swag init -g src/service-account/cmd/service-account/main.go -o ./docs --parseDependency --parseInternal

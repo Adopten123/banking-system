@@ -4,6 +4,8 @@ import (
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Handler struct {
@@ -23,6 +25,10 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	r.Route("/api/system", func(r chi.Router) {
 		r.Get("/ping", h.ping)
