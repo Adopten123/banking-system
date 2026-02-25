@@ -49,5 +49,6 @@ tasks:
 
   swag:account:
     desc: "Сгенерировать документацию Swagger"
+    dir: src/service-account
     cmds:
-      - swag init -g src/service-account/cmd/service-account/main.go -o ./docs --parseDependency --parseInternal
+      - swag init -g cmd/service-account/main.go -o ./docs --parseDependency --parseInternal

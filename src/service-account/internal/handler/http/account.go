@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	_ "github.com/Adopten123/banking-system/service-account/internal/domain"
 )
 
 type CreateAccountRequest struct {

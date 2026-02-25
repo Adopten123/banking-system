@@ -60,6 +60,17 @@ definitions:
       amount:
         type: string
     type: object
+  internal_handler_http.TransferRequest:
+    properties:
+      amount:
+        type: string
+      currency_code:
+        type: string
+      description:
+        type: string
+      to_account_id:
+        type: string
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -230,6 +241,58 @@ paths:
               type: string
             type: object
       summary: История транзакций (выписка)
+      tags:
+      - accounts
+  /api/accounts/{id}/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Осуществляет безопасный перевод денег между двумя счетами
+      parameters:
+      - description: Public ID счета отправителя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Уникальный ключ запроса
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Данные для перевода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_http.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный перевод
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Перевод средств
       tags:
       - accounts
 swagger: "2.0"

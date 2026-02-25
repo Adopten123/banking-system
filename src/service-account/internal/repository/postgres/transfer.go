@@ -5,19 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type TransferTxParams struct {
-	FromAccountID  int64
-	ToAccountID    int64
-	AmountStr      string
-	CurrencyCode   string
-	IdempotencyKey string
-	Description    string
-}
-
-func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) error {
+func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferParams) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -27,8 +20,8 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 	qtx := r.queries.WithTx(tx)
 
 	// Deadlock defense
-	account1ID := arg.FromAccountID
-	account2ID := arg.ToAccountID
+	account1ID := params.FromAccountID
+	account2ID := params.ToAccountID
 	if account1ID > account2ID {
 		account1ID, account2ID = account2ID, account1ID
 	}
@@ -48,7 +41,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 	var senderStatus int32
 	var senderCurrency, receiverCurrency string
 
-	if arg.FromAccountID == account1ID {
+	if params.FromAccountID == account1ID {
 		senderStatus = acc1.StatusID.Int32
 		senderCurrency = acc1.CurrencyCode.String
 		receiverCurrency = acc2.CurrencyCode.String
@@ -67,16 +60,17 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 
 	// Prepare Sum
 	var amountPositive, amountNegative pgtype.Numeric
-	amountPositive.Scan(arg.AmountStr)
-	amountNegative.Scan("-" + arg.AmountStr)
+	amountPositive.Scan(params.AmountStr)
+	amountNegative.Scan("-" + params.AmountStr)
 
 	// Making transaction
 	//(category_id = 3 - transfer, status_id = 2 - posted)
 	txID, err := qtx.CreateTransaction(ctx, CreateTransactionParams{
-		IdempotencyKey: pgtype.Text{String: arg.IdempotencyKey, Valid: true},
+		ID:             pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
 		CategoryID:     pgtype.Int4{Int32: 3, Valid: true},
 		StatusID:       pgtype.Int4{Int32: 2, Valid: true},
-		Description:    pgtype.Text{String: arg.Description, Valid: true},
+		Description:    pgtype.Text{String: params.Description, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
@@ -85,9 +79,9 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 	// Posting and writing off the Sender's balance
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
 		TransactionID: txID.ID,
-		AccountID:     pgtype.Int8{Int64: arg.FromAccountID, Valid: true},
+		AccountID:     pgtype.Int8{Int64: params.FromAccountID, Valid: true},
 		Amount:        amountNegative,
-		CurrencyCode:  pgtype.Text{String: arg.CurrencyCode, Valid: true},
+		CurrencyCode:  pgtype.Text{String: params.CurrencyCode, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create posting for sender: %w", err)
@@ -95,7 +89,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 
 	_, err = qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
 		Balance:   amountNegative,
-		AccountID: arg.FromAccountID,
+		AccountID: params.FromAccountID,
 	})
 	if err != nil {
 		return fmt.Errorf("insufficient funds or balance update failed: %w", err)
@@ -104,9 +98,9 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 	// Posting and accrual of the Recipient's balance
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
 		TransactionID: txID.ID,
-		AccountID:     pgtype.Int8{Int64: arg.ToAccountID, Valid: true},
+		AccountID:     pgtype.Int8{Int64: params.ToAccountID, Valid: true},
 		Amount:        amountPositive,
-		CurrencyCode:  pgtype.Text{String: arg.CurrencyCode, Valid: true},
+		CurrencyCode:  pgtype.Text{String: params.CurrencyCode, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create posting for receiver: %w", err)
@@ -114,7 +108,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, arg TransferTxParams) erro
 
 	_, err = qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
 		Balance:   amountPositive,
-		AccountID: arg.ToAccountID,
+		AccountID: params.ToAccountID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add balance to receiver: %w", err)

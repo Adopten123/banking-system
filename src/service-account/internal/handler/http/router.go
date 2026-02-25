@@ -40,6 +40,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/{id}/transactions", h.getTransactions)
 
 		r.Post("/{id}/deposit", h.deposit)
+		r.Post("/{id}/transfer", h.transfer)
 	})
 
 	return r
