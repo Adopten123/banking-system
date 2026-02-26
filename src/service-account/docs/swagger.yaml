@@ -205,25 +205,32 @@ paths:
       - accounts
   /api/accounts/{id}/transactions:
     get:
-      description: Возвращает список всех операций по указанному счету, отсортированный
-        от новых к старым
+      description: Возвращает список транзакций по счету с поддержкой пагинации
       parameters:
-      - description: Public ID счета (UUID)
+      - description: Public ID счета
         in: path
         name: id
         required: true
         type: string
+      - description: Количество записей (по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение (по умолчанию 0)
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Список транзакций
+          description: OK
           schema:
             items:
               $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory'
             type: array
         "400":
-          description: Неверный формат ID
+          description: Неверный запрос
           schema:
             additionalProperties:
               type: string
@@ -240,7 +247,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: История транзакций (выписка)
+      summary: Получить историю транзакций
       tags:
       - accounts
   /api/accounts/{id}/transfer:

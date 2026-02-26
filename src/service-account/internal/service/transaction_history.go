@@ -7,11 +7,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *AccountService) GetAccountTransactions(ctx context.Context, publicID uuid.UUID) ([]domain.TransactionHistory, error) {
+func (s *AccountService) GetAccountTransactions(
+	ctx context.Context,
+	publicID uuid.UUID,
+	limit, offset int32,
+) ([]domain.TransactionHistory, error) {
 	acc, err := s.repo.GetByPublicID(ctx, publicID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.repo.GetTransactions(ctx, acc.ID)
+	return s.repo.GetTransactions(ctx, acc.ID, limit, offset)
 }

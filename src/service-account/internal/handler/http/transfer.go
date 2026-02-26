@@ -2,9 +2,11 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -76,6 +78,16 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		if errors.Is(err, domain.ErrInsufficientFunds) {
+			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money to complete the transfer", err)
+			return
+		}
+
+		if errors.Is(err, domain.ErrAccountNotFound) {
+			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Sender or receiver account not found", err)
+			return
+		}
+
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Transfer failed", err)
 		return
 	}

@@ -21,10 +21,17 @@ SELECT
     p.amount::text AS amount_str,
     p.currency_code
 FROM transactions t
-         JOIN postings p ON t.id = p.transaction_id
+JOIN postings p ON t.id = p.transaction_id
 WHERE p.account_id = $1
 ORDER BY t.created_at DESC
+LIMIT $3 OFFSET $2
 `
+
+type GetAccountTransactionsParams struct {
+	AccountID pgtype.Int8 `json:"account_id"`
+	Offset    int32       `json:"offset"`
+	Limit     int32       `json:"limit"`
+}
 
 type GetAccountTransactionsRow struct {
 	TransactionID pgtype.UUID        `json:"transaction_id"`
@@ -36,8 +43,8 @@ type GetAccountTransactionsRow struct {
 	CurrencyCode  pgtype.Text        `json:"currency_code"`
 }
 
-func (q *Queries) GetAccountTransactions(ctx context.Context, accountID pgtype.Int8) ([]GetAccountTransactionsRow, error) {
-	rows, err := q.db.Query(ctx, getAccountTransactions, accountID)
+func (q *Queries) GetAccountTransactions(ctx context.Context, arg GetAccountTransactionsParams) ([]GetAccountTransactionsRow, error) {
+	rows, err := q.db.Query(ctx, getAccountTransactions, arg.AccountID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

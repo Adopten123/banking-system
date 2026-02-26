@@ -8,13 +8,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (r *AccountRepo) GetTransactions(ctx context.Context, accountID int64) ([]domain.TransactionHistory, error) {
-	pgAccID := pgtype.Int8{
-		Int64: accountID,
-		Valid: true,
+func (r *AccountRepo) GetTransactions(
+	ctx context.Context,
+	accountID int64,
+	limit, offset int32,
+) ([]domain.TransactionHistory, error) {
+
+	params := GetAccountTransactionsParams{
+		AccountID: pgtype.Int8{Int64: accountID, Valid: true},
+		Limit:     limit,
+		Offset:    offset,
 	}
 
-	rows, err := r.queries.GetAccountTransactions(ctx, pgAccID)
+	rows, err := r.queries.GetAccountTransactions(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}

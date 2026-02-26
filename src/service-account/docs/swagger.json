@@ -197,26 +197,38 @@
         },
         "/api/accounts/{id}/transactions": {
             "get": {
-                "description": "Возвращает список всех операций по указанному счету, отсортированный от новых к старым",
+                "description": "Возвращает список транзакций по счету с поддержкой пагинации",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "accounts"
                 ],
-                "summary": "История транзакций (выписка)",
+                "summary": "Получить историю транзакций",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Public ID счета (UUID)",
+                        "description": "Public ID счета",
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей (по умолчанию 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение (по умолчанию 0)",
+                        "name": "offset",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Список транзакций",
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -225,7 +237,7 @@
                         }
                     },
                     "400": {
-                        "description": "Неверный формат ID",
+                        "description": "Неверный запрос",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

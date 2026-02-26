@@ -69,7 +69,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	transferAmount, _ := strconv.ParseFloat(params.AmountStr, 64)
 
 	if senderBalance < transferAmount {
-		return errors.New("insufficient funds")
+		return domain.ErrInsufficientFunds
 	}
 	// Prepare Sum
 	var amountPositive, amountNegative pgtype.Numeric

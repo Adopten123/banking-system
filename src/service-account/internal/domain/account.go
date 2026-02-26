@@ -26,7 +26,7 @@ type AccountRepository interface {
 	Deposit(ctx context.Context, accountID int64, amountStr string, currencyCode string, idempotencyKey string) error
 	TransferTx(ctx context.Context, arg TransferParams) error
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
-	GetTransactions(ctx context.Context, accountID int64) ([]TransactionHistory, error)
+	GetTransactions(ctx context.Context, accountID int64, limit, offset int32) ([]TransactionHistory, error)
 }
 
 type AccountService interface {
@@ -35,5 +35,5 @@ type AccountService interface {
 	Deposit(ctx context.Context, publicID uuid.UUID, amountStr string, idempotencyKey string) error
 	Transfer(ctx context.Context, fromPublicID, toPublicID uuid.UUID, amount, currency, idempotencyKey, description string) error
 	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
-	GetAccountTransactions(ctx context.Context, publicID uuid.UUID) ([]TransactionHistory, error)
+	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, limit, offset int32) ([]TransactionHistory, error)
 }
