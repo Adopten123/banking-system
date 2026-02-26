@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
@@ -40,15 +41,22 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	// Business Checks. Verifying Statuses and Currencies
 	var senderStatus int32
 	var senderCurrency, receiverCurrency string
+	var senderBalance float64
 
 	if params.FromAccountID == account1ID {
 		senderStatus = acc1.StatusID.Int32
 		senderCurrency = acc1.CurrencyCode.String
 		receiverCurrency = acc2.CurrencyCode.String
+
+		bal, _ := acc1.Balance.Float64Value()
+		senderBalance = bal.Float64
 	} else {
 		senderStatus = acc2.StatusID.Int32
 		senderCurrency = acc2.CurrencyCode.String
 		receiverCurrency = acc1.CurrencyCode.String
+
+		bal, _ := acc2.Balance.Float64Value()
+		senderBalance = bal.Float64
 	}
 
 	if senderStatus != 1 {
@@ -58,10 +66,25 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 		return errors.New("cross-currency transfers are not supported yet")
 	}
 
+	transferAmount, _ := strconv.ParseFloat(params.AmountStr, 64)
+
+	if senderBalance < transferAmount {
+		return errors.New("insufficient funds")
+	}
 	// Prepare Sum
 	var amountPositive, amountNegative pgtype.Numeric
-	amountPositive.Scan(params.AmountStr)
-	amountNegative.Scan("-" + params.AmountStr)
+
+	if err := amountPositive.Scan(params.AmountStr); err != nil {
+		return fmt.Errorf("failed to parse positive amount: %w", err)
+	}
+
+	if err := amountNegative.Scan("-" + params.AmountStr); err != nil {
+		return fmt.Errorf("failed to parse negative amount: %w", err)
+	}
+
+	// ДЕБАГ: Выведем в консоль то, что реально полетит в базу
+	fmt.Printf("DEBUG TRANSFER: SenderID=%d, ReceiverID=%d, Pos=%v, Neg=%v\n",
+		params.FromAccountID, params.ToAccountID, amountPositive.Int, amountNegative.Int)
 
 	// Making transaction
 	//(category_id = 3 - transfer, status_id = 2 - posted)
@@ -110,6 +133,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 		Balance:   amountPositive,
 		AccountID: params.ToAccountID,
 	})
+
 	if err != nil {
 		return fmt.Errorf("failed to add balance to receiver: %w", err)
 	}

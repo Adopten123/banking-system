@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -50,6 +51,17 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 	toPublicID, err := uuid.Parse(req.ToAccountID)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid receiver account ID", err)
+		return
+	}
+
+	if fromPublicID == toPublicID {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Cannot transfer to the same account", nil)
+		return
+	}
+
+	amountFloat, err := strconv.ParseFloat(req.Amount, 64)
+	if err != nil || amountFloat <= 0 {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Amount must be a positive number greater than zero", nil)
 		return
 	}
 
