@@ -18,19 +18,9 @@ func NewAccountService(repo domain.AccountRepository) *AccountService {
 	}
 }
 
-func (s *AccountService) CheckHealth(ctx context.Context) string {
-	err := s.repo.Ping(ctx)
-	if err != nil {
-		return "error"
-	}
-	return "database and service are ok"
-}
-
 func (s *AccountService) CreateAccount(
 	ctx context.Context,
-	userID uuid.UUID,
-	typeID int32,
-	currencyCode, name string,
+	params domain.CreateAccountInput,
 ) (*domain.Account, error) {
 
 	publicID := uuid.New()
@@ -38,11 +28,11 @@ func (s *AccountService) CreateAccount(
 
 	acc := &domain.Account{
 		PublicID:     publicID,
-		UserID:       userID,
-		TypeID:       typeID,
+		UserID:       params.UserID,
+		TypeID:       params.TypeID,
 		StatusID:     defaultStatusID,
-		CurrencyCode: currencyCode,
-		Name:         name,
+		CurrencyCode: params.CurrencyCode,
+		Name:         params.Name,
 	}
 
 	createdAcc, err := s.repo.Create(ctx, acc)

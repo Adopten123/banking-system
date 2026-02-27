@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	_ "github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/google/uuid"
 )
 
 type CreateAccountRequest struct {
@@ -43,10 +44,12 @@ func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	// Calling service
 	acc, err := h.service.CreateAccount(
 		r.Context(),
-		userID,
-		req.TypeID,
-		req.CurrencyCode,
-		req.Name,
+		domain.CreateAccountInput{
+			UserID:       userID,
+			TypeID:       req.TypeID,
+			CurrencyCode: req.CurrencyCode,
+			Name:         req.Name,
+		},
 	)
 
 	if err != nil {

@@ -12,8 +12,7 @@ import (
 func (s *AccountService) Deposit(
 	ctx context.Context,
 	publicID uuid.UUID,
-	amountStr string,
-	idempotencyKey string,
+	input domain.ServiceDepositInput,
 ) error {
 	// Getting account by id
 	acc, err := s.repo.GetByPublicID(ctx, publicID)
@@ -30,7 +29,12 @@ func (s *AccountService) Deposit(
 	}
 
 	// Calling repo layer
-	err = s.repo.Deposit(ctx, acc.ID, amountStr, acc.CurrencyCode, idempotencyKey)
+	err = s.repo.Deposit(ctx, domain.RepoDepositParams{
+		AccountID: acc.ID,
+		AmountStr: input.AmountStr,
+		CurrencyCode: acc.CurrencyCode,
+		IdempotencyKey: input.IdempotencyKey,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to process deposit in repository: %w", err)
 	}

@@ -70,7 +70,15 @@ func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	history, err := h.service.GetAccountTransactions(r.Context(), publicID, limit, offset, startDate, endDate)
+	history, err := h.service.GetAccountTransactions(r.Context(), publicID,
+		domain.TransactionFilter{
+			Limit:     limit,
+			Offset:    offset,
+			StartDate: startDate,
+			EndDate:   endDate,
+		},
+	)
+
 	if err != nil {
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)

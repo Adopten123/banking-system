@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,24 +11,23 @@ import (
 func (r *AccountRepo) GetTransactions(
 	ctx context.Context,
 	accountID int64,
-	limit, offset int32,
-	startDate, endDate *time.Time,
+	filter domain.TransactionFilter,
 ) ([]domain.TransactionHistory, error) {
 
 	var startPg, endPg pgtype.Timestamp
-	if startDate != nil {
-		startPg = pgtype.Timestamp{Time: *startDate, Valid: true}
+	if filter.StartDate != nil {
+		startPg = pgtype.Timestamp{Time: *filter.StartDate, Valid: true}
 	}
-	if endDate != nil {
-		endPg = pgtype.Timestamp{Time: *endDate, Valid: true}
+	if filter.EndDate != nil {
+		endPg = pgtype.Timestamp{Time: *filter.EndDate, Valid: true}
 	}
 
 	params := GetAccountTransactionsParams{
 		AccountID: pgtype.Int8{Int64: accountID, Valid: true},
 		StartDate: startPg,
 		EndDate:   endPg,
-		Limit:     limit,
-		Offset:    offset,
+		Limit:     filter.Limit,
+		Offset:    filter.Offset,
 	}
 
 	rows, err := r.queries.GetAccountTransactions(ctx, params)
@@ -37,7 +35,7 @@ func (r *AccountRepo) GetTransactions(
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}
 
-	var history []domain.TransactionHistory
+	history := make([]domain.TransactionHistory, 0, len(rows))
 	for _, row := range rows {
 		history = append(history, domain.TransactionHistory{
 			TransactionID: row.TransactionID.Bytes,

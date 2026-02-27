@@ -69,12 +69,14 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Transfer(
 		r.Context(),
-		fromPublicID,
-		toPublicID,
-		req.Amount,
-		req.CurrencyCode,
-		idempotencyKey,
-		req.Description,
+		domain.TransferInput{
+			FromPublicID:   fromPublicID,
+			ToPublicID:     toPublicID,
+			Amount:         req.Amount,
+			Currency:       req.CurrencyCode,
+			IdempotencyKey: idempotencyKey,
+			Description:    req.Description,
+		},
 	)
 
 	if err != nil {

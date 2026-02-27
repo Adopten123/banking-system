@@ -15,3 +15,12 @@ type TransactionHistory struct {
 	CurrencyCode  string    `json:"currency_code"`
 	CreatedAt     time.Time `json:"created_at"`
 }
+
+
+// TransactionFilter - params of pagination and history filtering
+type TransactionFilter struct {
+	Limit     int32
+	Offset    int32
+	StartDate *time.Time
+	EndDate   *time.Time
+}

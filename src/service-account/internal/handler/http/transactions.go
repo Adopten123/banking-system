@@ -52,7 +52,13 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Sending data into service
-	err = h.service.Deposit(r.Context(), publicID, req.Amount, idempotencyKey)
+	err = h.service.Deposit(r.Context(), publicID,
+		domain.ServiceDepositInput{
+			AmountStr:      req.Amount,
+			IdempotencyKey: idempotencyKey,
+		},
+	)
+
 	if err != nil {
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
@@ -69,7 +75,7 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 
 	// Making response
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "success",
 		"message": "Deposit processed successfully",
