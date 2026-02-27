@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,10 +13,21 @@ func (r *AccountRepo) GetTransactions(
 	ctx context.Context,
 	accountID int64,
 	limit, offset int32,
+	startDate, endDate *time.Time,
 ) ([]domain.TransactionHistory, error) {
+
+	var startPg, endPg pgtype.Timestamp
+	if startDate != nil {
+		startPg = pgtype.Timestamp{Time: *startDate, Valid: true}
+	}
+	if endDate != nil {
+		endPg = pgtype.Timestamp{Time: *endDate, Valid: true}
+	}
 
 	params := GetAccountTransactionsParams{
 		AccountID: pgtype.Int8{Int64: accountID, Valid: true},
+		StartDate: startPg,
+		EndDate:   endPg,
 		Limit:     limit,
 		Offset:    offset,
 	}

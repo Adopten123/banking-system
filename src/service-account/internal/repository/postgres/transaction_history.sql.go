@@ -23,14 +23,18 @@ SELECT
 FROM transactions t
 JOIN postings p ON t.id = p.transaction_id
 WHERE p.account_id = $1
+    AND ($2::timestamp IS NULL OR t.created_at >= $2)
+    AND ($3::timestamp IS NULL OR t.created_at <= $3)
 ORDER BY t.created_at DESC
-LIMIT $3 OFFSET $2
+LIMIT $5 OFFSET $4
 `
 
 type GetAccountTransactionsParams struct {
-	AccountID pgtype.Int8 `json:"account_id"`
-	Offset    int32       `json:"offset"`
-	Limit     int32       `json:"limit"`
+	AccountID pgtype.Int8      `json:"account_id"`
+	StartDate pgtype.Timestamp `json:"start_date"`
+	EndDate   pgtype.Timestamp `json:"end_date"`
+	Offset    int32            `json:"offset"`
+	Limit     int32            `json:"limit"`
 }
 
 type GetAccountTransactionsRow struct {
@@ -44,7 +48,13 @@ type GetAccountTransactionsRow struct {
 }
 
 func (q *Queries) GetAccountTransactions(ctx context.Context, arg GetAccountTransactionsParams) ([]GetAccountTransactionsRow, error) {
-	rows, err := q.db.Query(ctx, getAccountTransactions, arg.AccountID, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, getAccountTransactions,
+		arg.AccountID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

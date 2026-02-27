@@ -230,6 +230,18 @@ const docTemplate = `{
                         "description": "Смещение (по умолчанию 0)",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конечная дата (RFC3339)",
+                        "name": "end_date",
+                        "in": "query"
                     }
                 ],
                 "responses": {

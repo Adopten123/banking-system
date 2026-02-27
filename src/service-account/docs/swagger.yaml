@@ -220,6 +220,14 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: 'Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)'
+        in: query
+        name: start_date
+        type: string
+      - description: Конечная дата (RFC3339)
+        in: query
+        name: end_date
+        type: string
       produces:
       - application/json
       responses:

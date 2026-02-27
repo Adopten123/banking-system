@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
@@ -18,6 +19,8 @@ import (
 // @Param id path string true "Public ID счета"
 // @Param limit query int false "Количество записей (по умолчанию 20)"
 // @Param offset query int false "Смещение (по умолчанию 0)"
+// @Param start_date query string false "Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)"
+// @Param end_date query string false "Конечная дата (RFC3339)"
 // @Success 200 {array} domain.TransactionHistory"
 // @Failure 400 {object} map[string]string "Неверный запрос"
 // @Failure 404 {object} map[string]string "Счет не найден"
@@ -47,7 +50,27 @@ func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	history, err := h.service.GetAccountTransactions(r.Context(), publicID, limit, offset)
+	var startDate, endDate *time.Time
+
+	if sd := query.Get("start_date"); sd != "" {
+		if parsedDate, err := time.Parse(time.RFC3339, sd); err == nil {
+			startDate = &parsedDate
+		} else {
+			respondWithError(w, http.StatusBadRequest, "INVALID_DATE", "Invalid start_date format. Use RFC3339", err)
+			return
+		}
+	}
+
+	if ed := query.Get("end_date"); ed != "" {
+		if parsedDate, err := time.Parse(time.RFC3339, ed); err == nil {
+			endDate = &parsedDate
+		} else {
+			respondWithError(w, http.StatusBadRequest, "INVALID_DATE", "Invalid end_date format. Use RFC3339", err)
+			return
+		}
+	}
+
+	history, err := h.service.GetAccountTransactions(r.Context(), publicID, limit, offset, startDate, endDate)
 	if err != nil {
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
