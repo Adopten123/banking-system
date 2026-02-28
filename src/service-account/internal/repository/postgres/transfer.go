@@ -39,12 +39,14 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	}
 
 	// Business Checks. Verifying Statuses and Currencies
-	var senderStatus int32
+	var senderStatus, receiverStatus int32
 	var senderCurrency, receiverCurrency string
 	var senderBalance float64
 
 	if params.FromAccountID == account1ID {
 		senderStatus = acc1.StatusID.Int32
+		receiverStatus = acc2.StatusID.Int32
+
 		senderCurrency = acc1.CurrencyCode.String
 		receiverCurrency = acc2.CurrencyCode.String
 
@@ -52,6 +54,8 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 		senderBalance = bal.Float64
 	} else {
 		senderStatus = acc2.StatusID.Int32
+		receiverStatus = acc1.StatusID.Int32
+
 		senderCurrency = acc2.CurrencyCode.String
 		receiverCurrency = acc1.CurrencyCode.String
 
@@ -60,8 +64,12 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	}
 
 	if senderStatus != 1 {
-		return errors.New("sender account is blocked or inactive")
+		return domain.ErrAccountInactive
 	}
+	if receiverStatus != 1 {
+		return domain.ErrAccountInactive
+	}
+
 	if senderCurrency != receiverCurrency {
 		return errors.New("cross-currency transfers are not supported yet")
 	}

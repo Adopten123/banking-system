@@ -15,6 +15,9 @@ type AccountRepository interface {
 
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetTransactions(ctx context.Context, accountID int64, filter TransactionFilter) ([]TransactionHistory, error)
+
+	UpdateStatus(ctx context.Context, accountID int64, statusID int32) error
+	CloseAccountTx(ctx context.Context, accountID int64) error
 }
 
 type AccountService interface {
@@ -27,4 +30,7 @@ type AccountService interface {
 
 	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, params TransactionFilter) ([]TransactionHistory, error)
+
+	BlockAccount(ctx context.Context, publicID uuid.UUID) error
+	CloseAccount(ctx context.Context, publicID uuid.UUID) error
 }

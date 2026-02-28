@@ -41,6 +41,9 @@ func (h *Handler) InitRoutes() *chi.Mux {
 
 		r.Post("/{id}/deposit", h.deposit)
 		r.Post("/{id}/transfer", h.transfer)
+
+		r.Post("/{id}/block", h.blockAccount)
+		r.Post("/{id}/close", h.closeAccount)
 	})
 
 	return r
