@@ -48,9 +48,10 @@ services:
       RABBITMQ_DEFAULT_USER: rmq_admin
       RABBITMQ_DEFAULT_PASS: secretpassword
     ports:
-      - "5672:5672"   # Порт для общения сервисов
-      - "15672:15672" # Веб-интерфейс RabbitMQ (Management UI)
-    restart: unless-stopped
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
   # ==========================================
   # МИКРОСЕРВИСЫ
@@ -85,3 +86,4 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin_data:
+  rabbitmq_data:

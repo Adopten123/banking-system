@@ -36,7 +36,7 @@ func (r *AccountRepo) CloseAccountTx(ctx context.Context, accountID int64) error
 		return fmt.Errorf("failed to lock balance for update: %w", err)
 	}
 
-	bl, _ := balancePg.Float64Value()
+	bl, _ := balancePg.Balance.Float64Value()
 
 	if bl.Float64 != 0 {
 		return domain.ErrAccountHasBalance
