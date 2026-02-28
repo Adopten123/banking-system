@@ -12,16 +12,21 @@ import (
 )
 
 const getBalanceForUpdate = `-- name: GetBalanceForUpdate :one
-SELECT balance
+SELECT balance, credit_limit
 FROM account_balances
 WHERE account_id = $1 FOR UPDATE
 `
 
-func (q *Queries) GetBalanceForUpdate(ctx context.Context, accountID int64) (pgtype.Numeric, error) {
+type GetBalanceForUpdateRow struct {
+	Balance     pgtype.Numeric `json:"balance"`
+	CreditLimit pgtype.Numeric `json:"credit_limit"`
+}
+
+func (q *Queries) GetBalanceForUpdate(ctx context.Context, accountID int64) (GetBalanceForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, getBalanceForUpdate, accountID)
-	var balance pgtype.Numeric
-	err := row.Scan(&balance)
-	return balance, err
+	var i GetBalanceForUpdateRow
+	err := row.Scan(&i.Balance, &i.CreditLimit)
+	return i, err
 }
 
 const updateAccountStatus = `-- name: UpdateAccountStatus :exec

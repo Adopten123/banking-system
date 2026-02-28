@@ -5,6 +5,6 @@ SET status_id = $1,
 WHERE id = $2;
 
 -- name: GetBalanceForUpdate :one
-SELECT balance
+SELECT balance, credit_limit
 FROM account_balances
 WHERE account_id = $1 FOR UPDATE;

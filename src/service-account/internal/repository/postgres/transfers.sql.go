@@ -15,7 +15,8 @@ const getAccountForUpdate = `-- name: GetAccountForUpdate :one
 SELECT a.id,
        a.status_id,
        a.currency_code,
-       ab.balance
+       ab.balance,
+       ab.credit_limit
 FROM accounts a
 JOIN account_balances ab ON a.id = ab.account_id
 WHERE a.id = $1
@@ -27,6 +28,7 @@ type GetAccountForUpdateRow struct {
 	StatusID     pgtype.Int4    `json:"status_id"`
 	CurrencyCode pgtype.Text    `json:"currency_code"`
 	Balance      pgtype.Numeric `json:"balance"`
+	CreditLimit  pgtype.Numeric `json:"credit_limit"`
 }
 
 func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (GetAccountForUpdateRow, error) {
@@ -37,6 +39,7 @@ func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (GetAccount
 		&i.StatusID,
 		&i.CurrencyCode,
 		&i.Balance,
+		&i.CreditLimit,
 	)
 	return i, err
 }

@@ -39,29 +39,26 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	}
 
 	// Business Checks. Verifying Statuses and Currencies
-	var senderStatus, receiverStatus int32
-	var senderCurrency, receiverCurrency string
-	var senderBalance float64
+	var senderAcc, receiverAcc GetAccountForUpdateRow
 
 	if params.FromAccountID == account1ID {
-		senderStatus = acc1.StatusID.Int32
-		receiverStatus = acc2.StatusID.Int32
-
-		senderCurrency = acc1.CurrencyCode.String
-		receiverCurrency = acc2.CurrencyCode.String
-
-		bal, _ := acc1.Balance.Float64Value()
-		senderBalance = bal.Float64
+		senderAcc = acc1
+		receiverAcc = acc2
 	} else {
-		senderStatus = acc2.StatusID.Int32
-		receiverStatus = acc1.StatusID.Int32
-
-		senderCurrency = acc2.CurrencyCode.String
-		receiverCurrency = acc1.CurrencyCode.String
-
-		bal, _ := acc2.Balance.Float64Value()
-		senderBalance = bal.Float64
+		senderAcc = acc2
+		receiverAcc = acc1
 	}
+	senderStatus := senderAcc.StatusID.Int32
+	receiverStatus := receiverAcc.StatusID.Int32
+
+	senderCurrency := senderAcc.CurrencyCode.String
+	receiverCurrency := receiverAcc.CurrencyCode.String
+
+	bal, _ := senderAcc.Balance.Float64Value()
+	senderBalance := bal.Float64
+
+	limit, _ := senderAcc.CreditLimit.Float64Value()
+	senderCreditLimit := limit.Float64
 
 	if senderStatus != 1 {
 		return domain.ErrAccountInactive
@@ -76,7 +73,7 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 
 	transferAmount, _ := strconv.ParseFloat(params.AmountStr, 64)
 
-	if senderBalance < transferAmount {
+	if (senderBalance + senderCreditLimit) < transferAmount {
 		return domain.ErrInsufficientFunds
 	}
 	// Prepare Sum
