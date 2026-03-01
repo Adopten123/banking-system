@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	DB DBConfig
+	DB       DBConfig
+	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
 }
 
 type DBConfig struct {
@@ -17,6 +18,10 @@ type DBConfig struct {
 	MinConns        int32         `yaml:"min_conns"`
 	MaxConnIdleTime time.Duration `yaml:"max_conn_idle_time"`
 	MaxConnLifetime time.Duration `yaml:"max_conn_lifetime"`
+}
+
+type RabbitMQConfig struct {
+	URL string `yaml:"url" env:"RABBITMQ_URL"`
 }
 
 func Load(configPath string) *Config {

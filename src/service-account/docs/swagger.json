@@ -235,6 +235,77 @@
                 }
             }
         },
+        "/api/accounts/{id}/credit-limit": {
+            "put": {
+                "description": "Позволяет задать сумму овердрафта для счета (чтобы баланс мог уходить в минус)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Установить кредитный лимит",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Public ID счета",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.UpdateCreditLimitRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Лимит обновлен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/accounts/{id}/deposit": {
             "post": {
                 "description": "Зачисляет средства на указанный счет. Требует передачи Idempotency-Key в заголовках.",
@@ -579,6 +650,14 @@
                     "type": "string"
                 },
                 "to_account_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler_http.UpdateCreditLimitRequest": {
+            "type": "object",
+            "properties": {
+                "credit_limit": {
                     "type": "string"
                 }
             }

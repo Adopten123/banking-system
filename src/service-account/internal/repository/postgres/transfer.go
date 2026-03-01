@@ -87,9 +87,9 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 		return fmt.Errorf("failed to parse negative amount: %w", err)
 	}
 
-	// ДЕБАГ: Выведем в консоль то, что реально полетит в базу
-	fmt.Printf("DEBUG TRANSFER: SenderID=%d, ReceiverID=%d, Pos=%v, Neg=%v\n",
-		params.FromAccountID, params.ToAccountID, amountPositive.Int, amountNegative.Int)
+	// Debug
+	//fmt.Printf("DEBUG TRANSFER: SenderID=%d, ReceiverID=%d, Pos=%v, Neg=%v\n",
+	//	params.FromAccountID, params.ToAccountID, amountPositive.Int, amountNegative.Int)
 
 	// Making transaction
 	//(category_id = 3 - transfer, status_id = 2 - posted)

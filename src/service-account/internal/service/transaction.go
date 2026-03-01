@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
@@ -30,13 +32,26 @@ func (s *AccountService) Deposit(
 
 	// Calling repo layer
 	err = s.repo.Deposit(ctx, domain.RepoDepositParams{
-		AccountID: acc.ID,
-		AmountStr: input.AmountStr,
-		CurrencyCode: acc.CurrencyCode,
+		AccountID:      acc.ID,
+		AmountStr:      input.AmountStr,
+		CurrencyCode:   acc.CurrencyCode,
 		IdempotencyKey: input.IdempotencyKey,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to process deposit in repository: %w", err)
 	}
+
+	err = s.publisher.PublishDepositCompleted(ctx, domain.DepositCompletedEvent{
+		TransactionID: uuid.New(),
+		AccountID:     acc.ID,
+		Amount:        input.AmountStr,
+		Currency:      acc.CurrencyCode,
+		Timestamp:     time.Now().UTC(),
+	})
+
+	if err != nil {
+		log.Printf("ERROR: Failed to publish DepositCompleted event for account %d: %v\n", acc.ID, err)
+	}
+
 	return nil
 }

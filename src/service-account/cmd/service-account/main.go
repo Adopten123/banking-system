@@ -7,6 +7,7 @@ import (
 
 	"github.com/Adopten123/banking-system/service-account/internal/config"
 	transport "github.com/Adopten123/banking-system/service-account/internal/handler/http"
+	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/broker"
 	"github.com/Adopten123/banking-system/service-account/internal/repository/postgres"
 	"github.com/Adopten123/banking-system/service-account/internal/server"
 	"github.com/Adopten123/banking-system/service-account/internal/service"
@@ -40,9 +41,22 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Connect to RabbitMQ
+	rabbitPublisher, err := broker.NewRabbitMQPublisher(cfg.RabbitMQ.URL)
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ: %v", err)
+	}
+	defer func() {
+		if err := rabbitPublisher.Close(); err != nil {
+			log.Printf("ERROR: Failed to close RabbitMQ connection gracefully: %v", err)
+		} else {
+			log.Println("RabbitMQ connection closed gracefully")
+		}
+	}()
+
 	// Init layers
 	repo := postgres.NewAccountRepo(pool)
-	svc := service.NewAccountService(repo)
+	svc := service.NewAccountService(repo, rabbitPublisher)
 	handler := transport.NewHandler(svc)
 	router := handler.InitRoutes()
 

@@ -3,18 +3,25 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
 )
 
 type AccountService struct {
-	repo domain.AccountRepository
+	repo      domain.AccountRepository
+	publisher domain.EventPublisher
 }
 
-func NewAccountService(repo domain.AccountRepository) *AccountService {
+func NewAccountService(
+	repo domain.AccountRepository,
+	publisher domain.EventPublisher,
+) *AccountService {
+
 	return &AccountService{
-		repo: repo,
+		repo:      repo,
+		publisher: publisher,
 	}
 }
 
@@ -38,6 +45,17 @@ func (s *AccountService) CreateAccount(
 	createdAcc, err := s.repo.Create(ctx, acc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create account: %w", err)
+	}
+
+	err = s.publisher.PublishAccountCreated(ctx, domain.AccountCreatedEvent{
+		AccountID: createdAcc.ID,
+		PublicID:  createdAcc.PublicID,
+		UserID:    createdAcc.UserID,
+		Currency:  createdAcc.CurrencyCode,
+		Timestamp: time.Now().UTC(),
+	})
+	if err != nil {
+		fmt.Printf("ERROR: Failed to publish AccountCreated event: %v\n", err)
 	}
 
 	return createdAcc, nil
