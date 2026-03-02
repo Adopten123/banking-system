@@ -52,3 +52,17 @@ tasks:
     dir: src/service-account
     cmds:
       - swag init -g cmd/service-account/main.go -o ./docs --parseDependency --parseInternal
+
+  # ==========================================
+  # Service Notification
+  # ==========================================
+  run:notification:
+    desc: "Локальный запуск Service Notification (без Docker)"
+    dir: src/service-notification
+    cmds:
+      - go run cmd/app/main.go
+
+  logs:notification:
+    desc: "Логи Service Notification"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f service-notification

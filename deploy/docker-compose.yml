@@ -71,6 +71,18 @@ services:
       - redis
     restart: unless-stopped
 
+  service-notification:
+    container_name: service_notification
+    build:
+      context: ../src/service-notification
+      dockerfile: Dockerfile
+    environment:
+      - CONFIG_PATH=config/config.yaml
+      - RABBITMQ_URL=amqp://rmq_admin:secretpassword@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
   api-gateway:
     image: nginx:alpine
     container_name: api_gateway
