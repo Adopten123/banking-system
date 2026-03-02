@@ -29,7 +29,7 @@ func (s *NotificationService) registerHandlers() {
 func (s *NotificationService) HandleMessage(eventType string, payload []byte) error {
 	handler, exists := s.handlers[eventType]
 	if !exists {
-		log.Printf("[WARNING] Получено событие неизвестного типа: %s", eventType)
+		log.Printf("[WARNING] Event of unknown type was received: %s", eventType)
 		return nil
 	}
 

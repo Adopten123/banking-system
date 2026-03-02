@@ -88,7 +88,7 @@ func (c *NotificationConsumer) Start() error {
 			err := c.notifService.HandleMessage(d.Type, d.Body)
 
 			if err != nil {
-				log.Printf("[ERROR] Ошибка при обработке сообщения типа %s: %v", d.Type, err)
+				log.Printf("[ERROR] Error processing message type %s: %v", d.Type, err)
 			}
 			d.Ack(false)
 		}
