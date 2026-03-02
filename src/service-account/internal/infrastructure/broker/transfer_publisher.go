@@ -10,7 +10,9 @@ import (
 )
 
 // PublishTransferCreated serializes the event to JSON and sends it to RabbitMQ
-func (p *RabbitMQPublisher) publishMessage(ctx context.Context, event interface{}) error {
+func (p *RabbitMQPublisher) publishMessage(ctx context.Context, event domain.DomainEvent) error {
+	eventType := event.EventName()
+
 	body, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event to JSON: %w", err)
@@ -18,11 +20,12 @@ func (p *RabbitMQPublisher) publishMessage(ctx context.Context, event interface{
 
 	err = p.ch.PublishWithContext(ctx,
 		"account_events", // Exchange
-		"",          // Routing key
-		false,       // Mandatory
-		false,       // Immediate
+		"",               // Routing key
+		false,            // Mandatory
+		false,            // Immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
+			Type:         eventType,
 			Body:         body,
 			DeliveryMode: amqp.Persistent, // message is saved to disk
 		},

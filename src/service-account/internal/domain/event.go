@@ -7,6 +7,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type DomainEvent interface {
+	EventName() string
+}
+
 type TransferCreatedEvent struct {
 	TransactionID  uuid.UUID `json:"transaction_id"`
 	FromAccountID  int64     `json:"from_account_id"`
@@ -17,12 +21,20 @@ type TransferCreatedEvent struct {
 	Timestamp      time.Time `json:"timestamp"`
 }
 
+func (e TransferCreatedEvent) EventName() string {
+	return "TransferCreatedEvent"
+}
+
 type AccountCreatedEvent struct {
 	AccountID int64     `json:"account_id"`
 	PublicID  uuid.UUID `json:"public_id"`
 	UserID    uuid.UUID `json:"user_id"`
 	Currency  string    `json:"currency"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+func (e AccountCreatedEvent) EventName() string {
+	return "AccountCreatedEvent"
 }
 
 type AccountStatusChangedEvent struct {
@@ -32,12 +44,20 @@ type AccountStatusChangedEvent struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+func (e AccountStatusChangedEvent) EventName() string {
+	return "AccountStatusChangedEvent"
+}
+
 type DepositCompletedEvent struct {
 	TransactionID uuid.UUID `json:"transaction_id"`
 	AccountID     int64     `json:"account_id"`
 	Amount        string    `json:"amount"`
 	Currency      string    `json:"currency"`
 	Timestamp     time.Time `json:"timestamp"`
+}
+
+func (e DepositCompletedEvent) EventName() string {
+	return "DepositCompletedEvent"
 }
 
 type EventPublisher interface {
