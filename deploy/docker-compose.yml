@@ -77,7 +77,7 @@ services:
       context: ../src/service-notification
       dockerfile: Dockerfile
     environment:
-      - CONFIG_PATH=config/config.yaml
+      - CONFIG_PATH=config/local.yaml
       - RABBITMQ_URL=amqp://rmq_admin:secretpassword@rabbitmq:5672/
     depends_on:
       - rabbitmq

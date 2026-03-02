@@ -1,0 +1,5 @@
+env: "local"
+rabbitmq:
+  url: "amqp://rmq_admin:secretpassword@localhost:5672/"
+  exchange: "transfers"
+  queue: "notification_queue"
