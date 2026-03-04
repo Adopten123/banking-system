@@ -68,6 +68,10 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusForbidden, "FORBIDDEN", "Account is not active", err)
 			return
 		}
+		if errors.Is(err, domain.ErrInvalidDepositAmount) {
+			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid deposit amount", err)
+			return
+		}
 
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to process deposit", err)
 		return

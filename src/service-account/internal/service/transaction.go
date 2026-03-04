@@ -9,6 +9,7 @@ import (
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 func (s *AccountService) Deposit(
@@ -25,9 +26,18 @@ func (s *AccountService) Deposit(
 		return fmt.Errorf("failed to fetch account for deposit: %w", err)
 	}
 
-	// Checking business rule: account must be active
+	// Checking business rule:
+	// Account must be active
 	if acc.StatusID != 1 {
 		return domain.ErrAccountInactive
+	}
+	// Amount > 0
+	amount, err := decimal.NewFromString(input.AmountStr)
+	if err != nil {
+		return fmt.Errorf("invalid amount format: %w", err)
+	}
+	if !amount.IsPositive() {
+		return domain.ErrInvalidDepositAmount
 	}
 
 	// Calling repo layer
