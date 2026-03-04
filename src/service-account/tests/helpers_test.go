@@ -84,3 +84,10 @@ func setAccountBalance(t *testing.T, pool *pgxpool.Pool, publicID uuid.UUID, amo
 	_, err := pool.Exec(context.Background(), query, amount, publicID)
 	require.NoError(t, err, "failed to set account balance")
 }
+
+// updateAccountStatus - upgrade status for test
+func updateAccountStatus(t *testing.T, pool *pgxpool.Pool, publicID uuid.UUID, statusID int) {
+	query := `UPDATE accounts SET status_id = $1 WHERE public_id = $2`
+	_, err := pool.Exec(context.Background(), query, statusID, publicID)
+	require.NoError(t, err, "failed to update account status in test setup")
+}

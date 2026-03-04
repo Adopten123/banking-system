@@ -23,6 +23,10 @@ func TestDeposit_TableDriven(t *testing.T) {
 	validUserID := createTestUser(t, testDBPool)
 	validAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
 
+	const closedStatus = 4
+	closedAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
+	updateAccountStatus(t, testDBPool, closedAccountID, closedStatus)
+
 	tests := []struct {
 		name                string
 		accountPathID       string
@@ -68,6 +72,46 @@ func TestDeposit_TableDriven(t *testing.T) {
 				"amount": "5000",
 			},
 			expectedCode:        http.StatusNotFound,
+			expectedEventsCount: 0,
+			expectedBalance:     InitialBalance(),
+		},
+		{
+			name:                "Success - Minimum Valid Amount (1 kopeck)",
+			accountPathID:       validAccountID.String(),
+			payload:             map[string]interface{}{"amount": "1"},
+			expectedCode:        http.StatusCreated,
+			expectedEventsCount: 1,
+			expectedBalance:     InitialBalance().Add(decimal.NewFromInt(1)),
+		},
+		{
+			name:                "Success - Gigantic Amount (Crypto scale)",
+			accountPathID:       validAccountID.String(),
+			payload:             map[string]interface{}{"amount": "9999999999999999999999"},
+			expectedCode:        http.StatusCreated,
+			expectedEventsCount: 1,
+			expectedBalance:     InitialBalance().Add(decimal.RequireFromString("9999999999999999999999")),
+		},
+		{
+			name:                "Fail - Deposit to Closed Account",
+			accountPathID:       closedAccountID.String(),
+			payload:             map[string]interface{}{"amount": "5000"},
+			expectedCode:        http.StatusForbidden,
+			expectedEventsCount: 0,
+			expectedBalance:     InitialBalance(),
+		},
+		{
+			name:                "Fail - Invalid JSON Amount Format (Letters)",
+			accountPathID:       validAccountID.String(),
+			payload:             map[string]interface{}{"amount": "abc"},
+			expectedCode:        http.StatusBadRequest,
+			expectedEventsCount: 0,
+			expectedBalance:     InitialBalance(),
+		},
+		{
+			name:                "Fail - Missing Amount Field",
+			accountPathID:       validAccountID.String(),
+			payload:             map[string]interface{}{},
+			expectedCode:        http.StatusBadRequest,
 			expectedEventsCount: 0,
 			expectedBalance:     InitialBalance(),
 		},

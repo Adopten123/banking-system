@@ -34,7 +34,7 @@ func (s *AccountService) Deposit(
 	// Amount > 0
 	amount, err := decimal.NewFromString(input.AmountStr)
 	if err != nil {
-		return fmt.Errorf("invalid amount format: %w", err)
+		return fmt.Errorf("%w: %v", domain.ErrInvalidAmountFormat, err)
 	}
 	if !amount.IsPositive() {
 		return domain.ErrInvalidDepositAmount
