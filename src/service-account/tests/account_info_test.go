@@ -8,20 +8,15 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetAccountBalance_TableDriven(t *testing.T) {
+func TestGetAccount_TableDriven(t *testing.T) {
 	router, _ := setupTestEnv(testDBPool)
 
 	validUserID := createTestUser(t, testDBPool)
 	validAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
 
-	expectedTestBalance := decimal.NewFromInt(77700)
-	setAccountBalance(t, testDBPool, validAccountID, expectedTestBalance)
-
-	// 2. ТАБЛИЦА ТЕСТОВ
 	tests := []struct {
 		name          string
 		accountPathID string
@@ -59,17 +54,13 @@ func TestGetAccountBalance_TableDriven(t *testing.T) {
 			if tt.expectedCode == http.StatusOK {
 				var resp map[string]interface{}
 				err := json.Unmarshal(rr.Body.Bytes(), &resp)
-				require.NoError(t, err, "failed to unmarshal response JSON")
+				require.NoError(t, err)
 
-				balanceValue, exists := resp["amount"]
-				require.True(t, exists, "JSON response must contain 'amount' field")
+				returnedID, exists := resp["id"]
+				require.True(t, exists, "JSON response must contain 'id' field")
+				require.Equal(t, tt.accountPathID, returnedID, "Returned ID does not match requested ID")
 
-				balanceStr := fmt.Sprintf("%v", balanceValue)
-				actualBalance, err := decimal.NewFromString(balanceStr)
-				require.NoError(t, err, "failed to parse balance from JSON")
-
-				require.True(t, expectedTestBalance.Equal(actualBalance),
-					"Balance in response mismatch: expected %s, got %s", expectedTestBalance.String(), actualBalance.String())
+				require.Equal(t, "RUB", resp["currency_code"])
 			}
 		})
 	}

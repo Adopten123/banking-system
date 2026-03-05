@@ -25,7 +25,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	r.Route("/api/accounts", func(r chi.Router) {
 		r.Post("/", h.createAccount)
 
-		r.Get("/{id}", h.getAccountBalance)
+		r.Get("/{id}", h.getAccountInfo)
 		r.Get("/{id}/transactions", h.getTransactions)
 
 		r.Post("/{id}/deposit", h.deposit)
