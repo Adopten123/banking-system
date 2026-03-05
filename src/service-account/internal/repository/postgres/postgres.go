@@ -9,6 +9,22 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type AccountRepo struct {
+	db      *pgxpool.Pool
+	queries *Queries
+}
+
+func NewAccountRepo(db *pgxpool.Pool) *AccountRepo {
+	return &AccountRepo{
+		db:      db,
+		queries: New(db),
+	}
+}
+
+func (r *AccountRepo) Ping(ctx context.Context) error {
+	return r.db.Ping(ctx)
+}
+
 func NewDBPool(ctx context.Context, cfg config.DBConfig) (*pgxpool.Pool, error) {
 	poolCfg, err := pgxpool.ParseConfig(cfg.DSN)
 	if err != nil {

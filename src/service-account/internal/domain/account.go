@@ -18,3 +18,13 @@ type Account struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
+
+type AccountInfoResponse struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	TypeID       int32     `json:"type_id"`
+	StatusID     int32     `json:"status_id"`
+	CurrencyCode string    `json:"currency_code"`
+	Name         string    `json:"name"`
+	CreatedAt    string    `json:"created_at"`
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
@@ -20,7 +21,7 @@ import (
 // @Failure 404 {object} map[string]string "Счет не найден"
 // @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/accounts/{id} [get]
-func (h *Handler) getAccountBalance(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getAccountInfo(w http.ResponseWriter, r *http.Request) {
 	accountID := chi.URLParam(r, "id")
 
 	publicID, err := uuid.Parse(accountID)
@@ -39,7 +40,17 @@ func (h *Handler) getAccountBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := domain.AccountInfoResponse{
+		ID:           acc.PublicID,
+		UserID:       acc.UserID,
+		TypeID:       acc.TypeID,
+		StatusID:     acc.StatusID,
+		CurrencyCode: acc.CurrencyCode,
+		Name:         acc.Name,
+		CreatedAt:    acc.CreatedAt.Format(time.RFC3339),
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(acc)
+	json.NewEncoder(w).Encode(resp)
 }

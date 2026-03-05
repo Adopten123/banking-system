@@ -9,22 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type AccountService struct {
-	repo      domain.AccountRepository
-	publisher domain.EventPublisher
-}
-
-func NewAccountService(
-	repo domain.AccountRepository,
-	publisher domain.EventPublisher,
-) *AccountService {
-
-	return &AccountService{
-		repo:      repo,
-		publisher: publisher,
-	}
-}
-
 func (s *AccountService) CreateAccount(
 	ctx context.Context,
 	params domain.CreateAccountInput,

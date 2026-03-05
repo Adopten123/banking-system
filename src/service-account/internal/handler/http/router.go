@@ -1,23 +1,12 @@
 package http
 
 import (
-	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	_ "github.com/Adopten123/banking-system/service-account/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
-
-type Handler struct {
-	service domain.AccountService
-}
-
-func NewHandler(service domain.AccountService) *Handler {
-	return &Handler{
-		service: service,
-	}
-}
 
 func (h *Handler) InitRoutes() *chi.Mux {
 	r := chi.NewRouter()
