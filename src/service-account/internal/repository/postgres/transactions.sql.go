@@ -105,3 +105,46 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	)
 	return i, err
 }
+
+const getAccountForWithdrawUpdate = `-- name: GetAccountForWithdrawUpdate :one
+SELECT a.id, a.status_id, ab.balance::text, ab.credit_limit::text
+FROM accounts a
+         JOIN account_balances ab ON a.id = ab.account_id
+WHERE a.public_id = $1
+    FOR NO KEY UPDATE
+`
+
+type GetAccountForWithdrawUpdateRow struct {
+	ID            int64       `json:"id"`
+	StatusID      pgtype.Int4 `json:"status_id"`
+	AbBalance     string      `json:"ab_balance"`
+	AbCreditLimit string      `json:"ab_credit_limit"`
+}
+
+func (q *Queries) GetAccountForWithdrawUpdate(ctx context.Context, publicID pgtype.UUID) (GetAccountForWithdrawUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getAccountForWithdrawUpdate, publicID)
+	var i GetAccountForWithdrawUpdateRow
+	err := row.Scan(
+		&i.ID,
+		&i.StatusID,
+		&i.AbBalance,
+		&i.AbCreditLimit,
+	)
+	return i, err
+}
+
+const subtractAccountBalance = `-- name: SubtractAccountBalance :exec
+UPDATE account_balances
+SET balance = balance - $1
+WHERE account_id = $2
+`
+
+type SubtractAccountBalanceParams struct {
+	Balance   pgtype.Numeric `json:"balance"`
+	AccountID int64          `json:"account_id"`
+}
+
+func (q *Queries) SubtractAccountBalance(ctx context.Context, arg SubtractAccountBalanceParams) error {
+	_, err := q.db.Exec(ctx, subtractAccountBalance, arg.Balance, arg.AccountID)
+	return err
+}
