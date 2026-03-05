@@ -64,6 +64,20 @@ func (q *Queries) CreateAccountBalance(ctx context.Context, accountID int64) err
 	return err
 }
 
+const getAccountBalanceByPublicID = `-- name: GetAccountBalanceByPublicID :one
+SELECT ab.balance::text
+FROM account_balances ab
+JOIN accounts a ON a.id = ab.account_id
+WHERE a.public_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAccountBalanceByPublicID(ctx context.Context, publicID pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, getAccountBalanceByPublicID, publicID)
+	var ab_balance string
+	err := row.Scan(&ab_balance)
+	return ab_balance, err
+}
+
 const getAccountByID = `-- name: GetAccountByID :one
 SELECT id, public_id, user_id, type_id, status_id, currency_code, name, version, created_at, updated_at FROM accounts
 WHERE id = $1 LIMIT 1

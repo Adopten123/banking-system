@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Account struct {
@@ -27,4 +28,9 @@ type AccountInfoResponse struct {
 	CurrencyCode string    `json:"currency_code"`
 	Name         string    `json:"name"`
 	CreatedAt    string    `json:"created_at"`
+}
+
+type AccountBalanceResponse struct {
+	AccountID uuid.UUID       `json:"account_id"`
+	Balance   decimal.Decimal `json:"balance"`
 }

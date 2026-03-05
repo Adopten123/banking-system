@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type AccountRepository interface {
@@ -14,6 +15,7 @@ type AccountRepository interface {
 	TransferTx(ctx context.Context, arg TransferParams) error
 
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
+	GetBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)
 	GetTransactions(ctx context.Context, accountID int64, filter TransactionFilter) ([]TransactionHistory, error)
 
 	UpdateCreditLimit(ctx context.Context, accountID int64, limitStr string) error
@@ -30,6 +32,7 @@ type AccountService interface {
 	Transfer(ctx context.Context, input TransferInput) error
 
 	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
+	GetAccountBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)
 	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, params TransactionFilter) ([]TransactionHistory, error)
 
 	UpdateCreditLimit(ctx context.Context, publicID uuid.UUID, limitStr string) error

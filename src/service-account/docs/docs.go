@@ -123,6 +123,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/accounts/{id}/balance": {
+            "get": {
+                "description": "Возвращает текущий баланс счета по его публичному UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Получить баланс счета",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID счета (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное получение баланса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.AccountBalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID (INVALID_REQUEST)",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден (NOT_FOUND)",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера (INTERNAL_ERROR)",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/accounts/{id}/block": {
             "post": {
                 "description": "Переводит счет в статус \"blocked\" (3)",
@@ -592,6 +640,17 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.AccountBalanceResponse": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory": {
             "type": "object",
             "properties": {
@@ -639,6 +698,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "amount": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler_http.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "error": {
                     "type": "string"
                 }
             }

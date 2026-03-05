@@ -27,6 +27,13 @@ definitions:
         format: int32
         type: integer
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.AccountBalanceResponse:
+    properties:
+      account_id:
+        type: string
+      balance:
+        type: number
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory:
     properties:
       amount:
@@ -58,6 +65,13 @@ definitions:
   internal_handler_http.DepositRequest:
     properties:
       amount:
+        type: string
+    type: object
+  internal_handler_http.ErrorResponse:
+    properties:
+      code:
+        type: string
+      error:
         type: string
     type: object
   internal_handler_http.TransferRequest:
@@ -153,6 +167,38 @@ paths:
               type: string
             type: object
       summary: Получение информации о счете
+      tags:
+      - accounts
+  /api/accounts/{id}/balance:
+    get:
+      description: Возвращает текущий баланс счета по его публичному UUID
+      parameters:
+      - description: ID счета (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение баланса
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.AccountBalanceResponse'
+        "400":
+          description: Неверный формат ID (INVALID_REQUEST)
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "404":
+          description: Счет не найден (NOT_FOUND)
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера (INTERNAL_ERROR)
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+      summary: Получить баланс счета
       tags:
       - accounts
   /api/accounts/{id}/block:
