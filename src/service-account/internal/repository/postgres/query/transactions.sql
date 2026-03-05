@@ -14,7 +14,7 @@ SET balance    = balance + $1,
 WHERE account_id = $2 RETURNING account_id, balance, credit_limit, updated_at;
 
 -- name: GetAccountForWithdrawUpdate :one
-SELECT a.id, a.status_id, ab.balance::text, ab.credit_limit::text
+SELECT a.id, a.status_id, a.currency_code, ab.balance::text, ab.credit_limit::text
 FROM accounts a
 JOIN account_balances ab ON a.id = ab.account_id
 WHERE a.public_id = $1

@@ -107,16 +107,17 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const getAccountForWithdrawUpdate = `-- name: GetAccountForWithdrawUpdate :one
-SELECT a.id, a.status_id, ab.balance::text, ab.credit_limit::text
+SELECT a.id, a.status_id, a.currency_code, ab.balance::text, ab.credit_limit::text
 FROM accounts a
-         JOIN account_balances ab ON a.id = ab.account_id
+JOIN account_balances ab ON a.id = ab.account_id
 WHERE a.public_id = $1
-    FOR NO KEY UPDATE
+FOR NO KEY UPDATE
 `
 
 type GetAccountForWithdrawUpdateRow struct {
 	ID            int64       `json:"id"`
 	StatusID      pgtype.Int4 `json:"status_id"`
+	CurrencyCode  pgtype.Text `json:"currency_code"`
 	AbBalance     string      `json:"ab_balance"`
 	AbCreditLimit string      `json:"ab_credit_limit"`
 }
@@ -127,6 +128,7 @@ func (q *Queries) GetAccountForWithdrawUpdate(ctx context.Context, publicID pgty
 	err := row.Scan(
 		&i.ID,
 		&i.StatusID,
+		&i.CurrencyCode,
 		&i.AbBalance,
 		&i.AbCreditLimit,
 	)
