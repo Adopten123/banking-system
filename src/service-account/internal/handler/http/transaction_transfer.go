@@ -20,7 +20,7 @@ type TransferRequest struct {
 
 // @Summary Перевод средств
 // @Description Осуществляет безопасный перевод денег между двумя счетами
-// @Tags accounts
+// @Tags transactions
 // @Accept json
 // @Produce json
 // @Param id path string true "Public ID счета отправителя (UUID)"

@@ -17,7 +17,7 @@ type DepositRequest struct {
 
 // @Summary Пополнение счета
 // @Description Зачисляет средства на указанный счет. Требует передачи Idempotency-Key в заголовках.
-// @Tags accounts
+// @Tags transactions
 // @Accept json
 // @Produce json
 // @Param id path string true "Public ID счета (UUID)"

@@ -14,7 +14,7 @@ import (
 
 // @Summary Получить историю транзакций
 // @Description Возвращает список транзакций по счету с поддержкой пагинации
-// @Tags accounts
+// @Tags transactions
 // @Produce json
 // @Param id path string true "Public ID счета"
 // @Param limit query int false "Количество записей (по умолчанию 20)"

@@ -16,20 +16,21 @@ func (r *AccountRepo) WithdrawTx(
 	ctx context.Context,
 	publicID uuid.UUID,
 	amount decimal.Decimal,
-) error {
+) (*domain.WithdrawResponse, error) {
+
 	const activeAccountStatus = 1
 	const statusCompleted = 1
 	const transactionTypeWithdraw = 3
 
 	var pgUUID pgtype.UUID
 	if err := pgUUID.Scan(publicID.String()); err != nil {
-		return fmt.Errorf("invalid public_id: %w", err)
+		return nil, fmt.Errorf("invalid public_id: %w", err)
 	}
 
 	// Open transaction
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin tx: %w", err)
+		return nil, fmt.Errorf("failed to begin tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -39,36 +40,36 @@ func (r *AccountRepo) WithdrawTx(
 	accInfo, err := qtx.GetAccountForWithdrawUpdate(ctx, pgUUID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrAccountNotFound
+			return nil, domain.ErrAccountNotFound
 		}
-		return fmt.Errorf("failed to lock account: %w", err)
+		return nil, fmt.Errorf("failed to lock account: %w", err)
 	}
 
 	// Check account status
 	if accInfo.StatusID.Int32 != activeAccountStatus {
-		return domain.ErrAccountInactive
+		return nil, domain.ErrAccountInactive
 	}
 
 	// Parse balance and limit
 	balance, err := decimal.NewFromString(accInfo.AbBalance)
 	if err != nil {
-		return fmt.Errorf("failed to parse balance: %w", err)
+		return nil, fmt.Errorf("failed to parse balance: %w", err)
 	}
 	creditLimit, err := decimal.NewFromString(accInfo.AbCreditLimit)
 	if err != nil {
-		return fmt.Errorf("failed to parse credit limit: %w", err)
+		return nil, fmt.Errorf("failed to parse credit limit: %w", err)
 	}
 
 	// Balance + Credit Limit >= Amount
 	availableFunds := balance.Add(creditLimit)
 	if availableFunds.LessThan(amount) {
-		return domain.ErrInsufficientFunds
+		return nil, domain.ErrInsufficientFunds
 	}
 
 	// Subtract money from balance
 	var amountNumeric pgtype.Numeric
 	if err := amountNumeric.Scan(amount.String()); err != nil {
-		return fmt.Errorf("failed to scan amount: %w", err)
+		return nil, fmt.Errorf("failed to scan amount: %w", err)
 	}
 
 	err = qtx.SubtractAccountBalance(ctx, SubtractAccountBalanceParams{
@@ -76,14 +77,14 @@ func (r *AccountRepo) WithdrawTx(
 		AccountID: accInfo.ID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update balance: %w", err)
+		return nil, fmt.Errorf("failed to update balance: %w", err)
 	}
 
 	// Make transaction
 	txID := uuid.New()
 	var pgTxID pgtype.UUID
 	if err := pgTxID.Scan(txID.String()); err != nil {
-		return fmt.Errorf("failed to scan tx uuid: %w", err)
+		return nil, fmt.Errorf("failed to scan tx uuid: %w", err)
 	}
 
 	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
@@ -95,19 +96,19 @@ func (r *AccountRepo) WithdrawTx(
 		IdempotencyKey:  pgtype.Text{String: uuid.New().String(), Valid: true},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create transaction record: %w", err)
+		return nil, fmt.Errorf("failed to create transaction record: %w", err)
 	}
 
 	// Make posting
 	negAmount := amount.Neg()
 	var negAmountNumeric pgtype.Numeric
 	if err := negAmountNumeric.Scan(negAmount.String()); err != nil {
-		return fmt.Errorf("failed to scan negative amount: %w", err)
+		return nil, fmt.Errorf("failed to scan negative amount: %w", err)
 	}
 
 	var exchangeRate pgtype.Numeric
 	if err := exchangeRate.Scan("1.0"); err != nil {
-		return fmt.Errorf("failed to scan exchange rate: %w", err)
+		return nil, fmt.Errorf("failed to scan exchange rate: %w", err)
 	}
 
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
@@ -118,13 +119,18 @@ func (r *AccountRepo) WithdrawTx(
 		ExchangeRate:  exchangeRate,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create posting record: %w", err)
+		return nil, fmt.Errorf("failed to create posting record: %w", err)
 	}
 
+	newBalance := balance.Sub(amount)
 	// Commit
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("failed to commit tx: %w", err)
+		return nil, fmt.Errorf("failed to commit tx: %w", err)
 	}
 
-	return nil
+	return &domain.WithdrawResponse{
+		TransactionID: txID,
+		NewBalance:    newBalance,
+		Currency:      accInfo.CurrencyCode.String,
+	}, nil
 }

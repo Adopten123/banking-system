@@ -51,6 +51,20 @@ definitions:
       transaction_id:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest:
+    properties:
+      amount:
+        type: string
+    type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse:
+    properties:
+      currency:
+        type: string
+      new_balance:
+        type: number
+      transaction_id:
+        type: string
+    type: object
   internal_handler_http.CreateAccountRequest:
     properties:
       currency_code:
@@ -379,7 +393,7 @@ paths:
             type: object
       summary: Пополнение счета
       tags:
-      - accounts
+      - transactions
   /api/accounts/{id}/transactions:
     get:
       description: Возвращает список транзакций по счету с поддержкой пагинации
@@ -434,7 +448,7 @@ paths:
             type: object
       summary: Получить историю транзакций
       tags:
-      - accounts
+      - transactions
   /api/accounts/{id}/transfer:
     post:
       consumes:
@@ -486,5 +500,45 @@ paths:
             type: object
       summary: Перевод средств
       tags:
-      - accounts
+      - transactions
+  /api/accounts/{id}/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Списывает указанную сумму со счета. Учитывает кредитный лимит.
+      parameters:
+      - description: ID счета (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Сумма для снятия
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное снятие (возвращает чек)
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse'
+        "400":
+          description: Неверный запрос, нехватка средств или счет неактивен
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "404":
+          description: Счет не найден
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+      summary: Снятие наличных
+      tags:
+      - transactions
 swagger: "2.0"

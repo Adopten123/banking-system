@@ -30,6 +30,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/{id}/balance", h.getAccountBalance)
 
 		r.Post("/{id}/deposit", h.deposit)
+		r.Post("/{id}/withdraw", h.withdraw)
 		r.Post("/{id}/transfer", h.transfer)
 
 		r.Post("/{id}/block", h.blockAccount)
