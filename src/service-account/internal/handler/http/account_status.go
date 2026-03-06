@@ -12,13 +12,13 @@ import (
 
 // @Summary Блокировать счет
 // @Description Переводит счет в статус "blocked" (3)
-// @Tags accounts
-// @Produce json
-// @Param id path string true "Public ID счета"
-// @Success 200 {object} map[string]string "Счет заблокирован"
-// @Failure 400 {object} map[string]string "Неверный формат ID"
-// @Failure 404 {object} map[string]string "Счет не найден"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Tags 		accounts
+// @Produce 	json
+// @Param 		id path string true "Public ID счета"
+// @Success 	200 {object} map[string]string "Счет заблокирован"
+// @Failure 	400 {object} map[string]string "Неверный формат ID"
+// @Failure 	404 {object} map[string]string "Счет не найден"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/accounts/{id}/block [post]
 func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 	accIDParam := chi.URLParam(r, "id")

@@ -17,6 +17,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string          true  "ID счета (UUID)" Format(uuid)
+// @Param 		 Idempotency-Key header string true "Ключ идемпотентности (UUID)"
 // @Param        body body      domain.WithdrawRequest true  "Сумма для снятия"
 // @Success      200  {object}  domain.WithdrawResponse "Успешное снятие (возвращает чек)"
 // @Failure      400  {object}  ErrorResponse "Неверный запрос, нехватка средств или счет неактивен"
@@ -29,6 +30,12 @@ func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 	publicID, err := uuid.Parse(accountIDStr)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
+		return
+	}
+
+	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if idempotencyKey == "" {
+		respondWithError(w, http.StatusBadRequest, "MISSING_HEADER", "Idempotency-Key header is required", nil)
 		return
 	}
 
@@ -52,7 +59,7 @@ func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calling service
-	result, err := h.service.Withdraw(r.Context(), publicID, amount)
+	result, err := h.service.Withdraw(r.Context(), publicID, amount, idempotencyKey)
 	if err != nil {
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
@@ -64,6 +71,10 @@ func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 		}
 		if errors.Is(err, domain.ErrInsufficientFunds) {
 			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money on balance (including credit limit)", err)
+			return
+		}
+		if errors.Is(err, domain.ErrDuplicateTransaction) {
+			respondWithError(w, http.StatusConflict, "DUPLICATE_REQUEST", "Transaction with this Idempotency-Key already exists", err)
 			return
 		}
 

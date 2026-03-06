@@ -16,15 +16,15 @@ type UpdateCreditLimitRequest struct {
 
 // @Summary Установить кредитный лимит
 // @Description Позволяет задать сумму овердрафта для счета (чтобы баланс мог уходить в минус)
-// @Tags accounts
-// @Accept json
-// @Produce json
-// @Param id path string true "Public ID счета"
-// @Param request body UpdateCreditLimitRequest true "Данные для обновления"
-// @Success 200 {object} map[string]string "Лимит обновлен"
-// @Failure 400 {object} map[string]string "Неверный запрос"
-// @Failure 404 {object} map[string]string "Счет не найден"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Tags 		accounts
+// @Accept 		json
+// @Produce 	json
+// @Param 		id path string true "Public ID счета"
+// @Param 		request body UpdateCreditLimitRequest true "Данные для обновления"
+// @Success 	200 {object} map[string]string "Лимит обновлен"
+// @Failure 	400 {object} map[string]string "Неверный запрос"
+// @Failure 	404 {object} map[string]string "Счет не найден"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/accounts/{id}/credit-limit [put]
 func (h *Handler) updateCreditLimit(w http.ResponseWriter, r *http.Request) {
 	accountIDParam := chi.URLParam(r, "id")

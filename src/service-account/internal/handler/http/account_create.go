@@ -18,13 +18,13 @@ type CreateAccountRequest struct {
 
 // @Summary Создание нового счета
 // @Description Создает новый банковский счет для пользователя с нулевым балансом
-// @Tags accounts
-// @Accept json
-// @Produce json
-// @Param request body CreateAccountRequest true "Данные для создания счета"
-// @Success 201 {object} domain.Account "Счет успешно создан"
-// @Failure 400 {object} map[string]string "Неверный запрос (ошибка валидации)"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Tags 		accounts
+// @Accept 		json
+// @Produce 	json
+// @Param 		request body CreateAccountRequest true "Данные для создания счета"
+// @Success 	201 {object} domain.Account "Счет успешно создан"
+// @Failure 	400 {object} map[string]string "Неверный запрос (ошибка валидации)"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/accounts [post]
 func (h *Handler) createAccount(w http.ResponseWriter, r *http.Request) {
 	// Read JSON

@@ -14,18 +14,18 @@ import (
 
 // @Summary Получить историю транзакций
 // @Description Возвращает список транзакций по счету с поддержкой пагинации
-// @Tags transactions
-// @Produce json
-// @Param id path string true "Public ID счета"
-// @Param limit query int false "Количество записей (по умолчанию 20)"
-// @Param offset query int false "Смещение (по умолчанию 0)"
-// @Param start_date query string false "Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)"
-// @Param end_date query string false "Конечная дата (RFC3339)"
-// @Success 200 {array} domain.TransactionHistory"
-// @Failure 400 {object} map[string]string "Неверный запрос"
-// @Failure 404 {object} map[string]string "Счет не найден"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
-// @Router /api/accounts/{id}/transactions [get]
+// @Tags 		transactions
+// @Produce 	json
+// @Param 		id path string true "Public ID счета"
+// @Param 		limit query int false "Количество записей (по умолчанию 20)"
+// @Param 		offset query int false "Смещение (по умолчанию 0)"
+// @Param 		start_date query string false "Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)"
+// @Param 		end_date query string false "Конечная дата (RFC3339)"
+// @Success 	200 {array} domain.TransactionHistory"
+// @Failure 	400 {object} map[string]string "Неверный запрос"
+// @Failure 	404 {object} map[string]string "Счет не найден"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router 		/api/accounts/{id}/transactions [get]
 func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 	accountIDParam := chi.URLParam(r, "id")
 	publicID, err := uuid.Parse(accountIDParam)

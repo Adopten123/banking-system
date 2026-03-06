@@ -513,6 +513,11 @@ paths:
         name: id
         required: true
         type: string
+      - description: Ключ идемпотентности (UUID)
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
       - description: Сумма для снятия
         in: body
         name: body

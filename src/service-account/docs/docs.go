@@ -622,6 +622,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Ключ идемпотентности (UUID)",
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Сумма для снятия",
                         "name": "body",
                         "in": "body",

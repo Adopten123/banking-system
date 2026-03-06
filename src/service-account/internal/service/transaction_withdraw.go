@@ -13,8 +13,9 @@ func (s *AccountService) Withdraw(
 	ctx context.Context,
 	publicID uuid.UUID,
 	amount decimal.Decimal,
+	idempotencyKey string,
 ) (*domain.WithdrawResponse, error) {
-	result, err := s.repo.WithdrawTx(ctx, publicID, amount)
+	result, err := s.repo.WithdrawTx(ctx, publicID, amount, idempotencyKey)
 	if err != nil {
 		return nil, fmt.Errorf("withdraw transaction failed: %w", err)
 	}

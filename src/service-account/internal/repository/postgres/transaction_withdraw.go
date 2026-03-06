@@ -8,6 +8,7 @@ import (
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 )
@@ -16,6 +17,7 @@ func (r *AccountRepo) WithdrawTx(
 	ctx context.Context,
 	publicID uuid.UUID,
 	amount decimal.Decimal,
+	idempotencyKey string,
 ) (*domain.WithdrawResponse, error) {
 
 	const activeAccountStatus = 1
@@ -93,9 +95,13 @@ func (r *AccountRepo) WithdrawTx(
 		StatusID:        pgtype.Int4{Int32: statusCompleted, Valid: true},
 		Description:     pgtype.Text{String: "ATM Withdrawal", Valid: true},
 		ExternalDetails: []byte("{}"),
-		IdempotencyKey:  pgtype.Text{String: uuid.New().String(), Valid: true},
+		IdempotencyKey:  pgtype.Text{String: idempotencyKey, Valid: true},
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateTransaction
+		}
 		return nil, fmt.Errorf("failed to create transaction record: %w", err)
 	}
 

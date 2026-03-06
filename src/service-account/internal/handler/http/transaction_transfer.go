@@ -20,16 +20,16 @@ type TransferRequest struct {
 
 // @Summary Перевод средств
 // @Description Осуществляет безопасный перевод денег между двумя счетами
-// @Tags transactions
-// @Accept json
-// @Produce json
-// @Param id path string true "Public ID счета отправителя (UUID)"
-// @Param Idempotency-Key header string true "Уникальный ключ запроса"
-// @Param request body TransferRequest true "Данные для перевода"
-// @Success 200 {object} map[string]string "Успешный перевод"
-// @Failure 400 {object} map[string]string "Неверный запрос"
-// @Failure 404 {object} map[string]string "Счет не найден"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка"
+// @Tags 		transactions
+// @Accept 		json
+// @Produce 	json
+// @Param 		id path string true "Public ID счета отправителя (UUID)"
+// @Param 		Idempotency-Key header string true "Уникальный ключ запроса"
+// @Param 		request body TransferRequest true "Данные для перевода"
+// @Success 	200 {object} map[string]string "Успешный перевод"
+// @Failure 	400 {object} map[string]string "Неверный запрос"
+// @Failure 	404 {object} map[string]string "Счет не найден"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка"
 // @Router /api/accounts/{id}/transfer [post]
 func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 	fromAccID := chi.URLParam(r, "id")
