@@ -18,7 +18,7 @@ func (r *AccountRepo) WithdrawTx(
 	publicID uuid.UUID,
 	amount decimal.Decimal,
 	idempotencyKey string,
-) (*domain.WithdrawResponse, error) {
+) (*domain.WithdrawResult, error) {
 
 	const activeAccountStatus = 1
 	const statusCompleted = 1
@@ -134,7 +134,7 @@ func (r *AccountRepo) WithdrawTx(
 		return nil, fmt.Errorf("failed to commit tx: %w", err)
 	}
 
-	return &domain.WithdrawResponse{
+	return &domain.WithdrawResult{
 		TransactionID: txID,
 		NewBalance:    newBalance,
 		Currency:      accInfo.CurrencyCode.String,

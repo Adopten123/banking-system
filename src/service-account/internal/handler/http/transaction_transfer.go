@@ -4,19 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
-
-type TransferRequest struct {
-	ToAccountID  string `json:"to_account_id"`
-	Amount       string `json:"amount"`
-	CurrencyCode string `json:"currency_code"`
-	Description  string `json:"description"`
-}
 
 // @Summary Перевод средств
 // @Description Осуществляет безопасный перевод денег между двумя счетами
@@ -25,7 +18,7 @@ type TransferRequest struct {
 // @Produce 	json
 // @Param 		id path string true "Public ID счета отправителя (UUID)"
 // @Param 		Idempotency-Key header string true "Уникальный ключ запроса"
-// @Param 		request body TransferRequest true "Данные для перевода"
+// @Param 		request body domain.TransferRequest true "Данные для перевода"
 // @Success 	200 {object} map[string]string "Успешный перевод"
 // @Failure 	400 {object} map[string]string "Неверный запрос"
 // @Failure 	404 {object} map[string]string "Счет не найден"
@@ -44,7 +37,7 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Idempotency-Key header is required", nil)
 		return
 	}
-	var req TransferRequest
+	var req domain.TransferRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
@@ -61,13 +54,13 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	amountFloat, err := strconv.ParseFloat(req.Amount, 64)
-	if err != nil || amountFloat <= 0 {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Amount must be a positive number greater than zero", nil)
+	amount, err := decimal.NewFromString(req.Amount)
+	if err != nil || !amount.IsPositive() {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Amount must be a positive number", nil)
 		return
 	}
 
-	err = h.service.Transfer(
+	result, err := h.service.Transfer(
 		r.Context(),
 		domain.TransferInput{
 			FromPublicID:   fromPublicID,
@@ -92,8 +85,14 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Transfer failed", err)
 		return
+
 	}
+	resp := domain.TransferResponse{
+		TransactionID: result.TransactionID,
+		NewBalance:    result.SenderNewBalance,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	json.NewEncoder(w).Encode(resp)
 }

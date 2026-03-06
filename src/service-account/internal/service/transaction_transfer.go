@@ -12,16 +12,16 @@ import (
 func (s *AccountService) Transfer(
 	ctx context.Context,
 	input domain.TransferInput,
-) error {
+) (*domain.TransferResult, error) {
 
 	fromAcc, err := s.repo.GetByPublicID(ctx, input.FromPublicID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	toAcc, err := s.repo.GetByPublicID(ctx, input.ToPublicID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	params := domain.TransferParams{
@@ -33,9 +33,9 @@ func (s *AccountService) Transfer(
 		Description:    input.Description,
 	}
 
-	err = s.repo.TransferTx(ctx, params)
+	result, err := s.repo.TransferTx(ctx, params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	event := domain.TransferCreatedEvent{
@@ -53,5 +53,5 @@ func (s *AccountService) Transfer(
 		fmt.Printf("ERROR: Failed to publish transfer event for idempotency key %s: %v\n", input.IdempotencyKey, err)
 	}
 
-	return nil
+	return result, nil
 }

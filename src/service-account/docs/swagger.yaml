@@ -34,6 +34,18 @@ definitions:
       balance:
         type: number
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest:
+    properties:
+      amount:
+        type: string
+    type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse:
+    properties:
+      new_balance:
+        type: number
+      transaction_id:
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory:
     properties:
       amount:
@@ -49,6 +61,17 @@ definitions:
       status_id:
         type: integer
       transaction_id:
+        type: string
+    type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest:
+    properties:
+      amount:
+        type: string
+      currency_code:
+        type: string
+      description:
+        type: string
+      to_account_id:
         type: string
     type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest:
@@ -76,27 +99,11 @@ definitions:
       user_id:
         type: string
     type: object
-  internal_handler_http.DepositRequest:
-    properties:
-      amount:
-        type: string
-    type: object
   internal_handler_http.ErrorResponse:
     properties:
       code:
         type: string
       error:
-        type: string
-    type: object
-  internal_handler_http.TransferRequest:
-    properties:
-      amount:
-        type: string
-      currency_code:
-        type: string
-      description:
-        type: string
-      to_account_id:
         type: string
     type: object
   internal_handler_http.UpdateCreditLimitRequest:
@@ -345,52 +352,48 @@ paths:
     post:
       consumes:
       - application/json
-      description: Зачисляет средства на указанный счет. Требует передачи Idempotency-Key
-        в заголовках.
+      description: Зачисляет указанную сумму на счет
       parameters:
-      - description: Public ID счета (UUID)
+      - description: ID счета (UUID)
+        format: uuid
         in: path
         name: id
         required: true
         type: string
-      - description: Уникальный ключ запроса
+      - description: Ключ идемпотентности
         in: header
         name: Idempotency-Key
         required: true
         type: string
       - description: Сумма пополнения
         in: body
-        name: request
+        name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_http.DepositRequest'
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Успешное пополнение
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse'
         "400":
-          description: Неверный запрос
+          description: Неверный запрос или сумма
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
         "404":
           description: Счет не найден
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "409":
+          description: Дубликат транзакции
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
         "500":
           description: Внутренняя ошибка
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
       summary: Пополнение счета
       tags:
       - transactions
@@ -470,7 +473,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_handler_http.TransferRequest'
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest'
       produces:
       - application/json
       responses:

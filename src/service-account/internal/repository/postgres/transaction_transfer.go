@@ -4,17 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 )
 
-func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferParams) error {
+func (r *AccountRepo) TransferTx(
+	ctx context.Context,
+	params domain.TransferParams,
+) (*domain.TransferResult, error) {
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
@@ -30,117 +35,120 @@ func (r *AccountRepo) TransferTx(ctx context.Context, params domain.TransferPara
 	// Blocking accounts for update
 	acc1, err := qtx.GetAccountForUpdate(ctx, account1ID)
 	if err != nil {
-		return fmt.Errorf("failed to lock account 1: %w", err)
+		return nil, fmt.Errorf("failed to lock account 1: %w", err)
 	}
 
 	acc2, err := qtx.GetAccountForUpdate(ctx, account2ID)
 	if err != nil {
-		return fmt.Errorf("failed to lock account 2: %w", err)
+		return nil, fmt.Errorf("failed to lock account 2: %w", err)
 	}
 
 	// Business Checks. Verifying Statuses and Currencies
 	var senderAcc, receiverAcc GetAccountForUpdateRow
 
 	if params.FromAccountID == account1ID {
-		senderAcc = acc1
-		receiverAcc = acc2
+		senderAcc, receiverAcc = acc1, acc2
 	} else {
-		senderAcc = acc2
-		receiverAcc = acc1
+		senderAcc, receiverAcc = acc2, acc1
 	}
-	senderStatus := senderAcc.StatusID.Int32
-	receiverStatus := receiverAcc.StatusID.Int32
-
-	senderCurrency := senderAcc.CurrencyCode.String
-	receiverCurrency := receiverAcc.CurrencyCode.String
-
-	bal, _ := senderAcc.Balance.Float64Value()
-	senderBalance := bal.Float64
-
-	limit, _ := senderAcc.CreditLimit.Float64Value()
-	senderCreditLimit := limit.Float64
-
-	if senderStatus != 1 {
-		return domain.ErrAccountInactive
-	}
-	if receiverStatus != 1 {
-		return domain.ErrAccountInactive
+	if senderAcc.StatusID.Int32 != 1 || receiverAcc.StatusID.Int32 != 1 {
+		return nil, domain.ErrAccountInactive
 	}
 
-	if senderCurrency != receiverCurrency {
-		return errors.New("cross-currency transfers are not supported yet")
+	if senderAcc.CurrencyCode.String != receiverAcc.CurrencyCode.String {
+		return nil, errors.New("cross-currency transfers are not supported yet")
 	}
 
-	transferAmount, _ := strconv.ParseFloat(params.AmountStr, 64)
-
-	if (senderBalance + senderCreditLimit) < transferAmount {
-		return domain.ErrInsufficientFunds
-	}
-	// Prepare Sum
-	var amountPositive, amountNegative pgtype.Numeric
-
-	if err := amountPositive.Scan(params.AmountStr); err != nil {
-		return fmt.Errorf("failed to parse positive amount: %w", err)
+	transferAmount, err := decimal.NewFromString(params.AmountStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid transfer amount: %w", err)
 	}
 
-	if err := amountNegative.Scan("-" + params.AmountStr); err != nil {
-		return fmt.Errorf("failed to parse negative amount: %w", err)
+	var senderBalance, senderCreditLimit decimal.Decimal
+
+	if val, err := senderAcc.Balance.Value(); err == nil && val != nil {
+		_ = senderBalance.Scan(val)
 	}
 
-	// Debug
-	//fmt.Printf("DEBUG TRANSFER: SenderID=%d, ReceiverID=%d, Pos=%v, Neg=%v\n",
-	//	params.FromAccountID, params.ToAccountID, amountPositive.Int, amountNegative.Int)
+	if val, err := senderAcc.CreditLimit.Value(); err == nil && val != nil {
+		_ = senderCreditLimit.Scan(val)
+	}
 
-	// Making transaction
-	//(category_id = 3 - transfer, status_id = 2 - posted)
-	txID, err := qtx.CreateTransaction(ctx, CreateTransactionParams{
-		ID:             pgtype.UUID{Bytes: uuid.New(), Valid: true},
+	if senderBalance.Add(senderCreditLimit).LessThan(transferAmount) {
+		return nil, domain.ErrInsufficientFunds
+	}
+
+	var amountPositive pgtype.Numeric
+	amountPositive.Scan(transferAmount.String())
+
+	var amountNegative pgtype.Numeric
+	amountNegative.Scan(transferAmount.Neg().String())
+
+	txUUID := uuid.New()
+	pgTxID := pgtype.UUID{Bytes: txUUID, Valid: true}
+
+	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
+		ID:             pgTxID,
 		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
 		CategoryID:     pgtype.Int4{Int32: 3, Valid: true},
 		StatusID:       pgtype.Int4{Int32: 2, Valid: true},
 		Description:    pgtype.Text{String: params.Description, Valid: true},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create transaction: %w", err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateTransaction
+		}
+		return nil, fmt.Errorf("failed to insert transaction: %w", err)
 	}
 
-	// Posting and writing off the Sender's balance
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
-		TransactionID: txID.ID,
+		TransactionID: pgTxID,
 		AccountID:     pgtype.Int8{Int64: params.FromAccountID, Valid: true},
 		Amount:        amountNegative,
 		CurrencyCode:  pgtype.Text{String: params.CurrencyCode, Valid: true},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create posting for sender: %w", err)
+		return nil, fmt.Errorf("failed to create posting for sender: %w", err)
 	}
 
-	_, err = qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
+	senderUpdatedRow, err := qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
 		Balance:   amountNegative,
 		AccountID: params.FromAccountID,
 	})
 	if err != nil {
-		return fmt.Errorf("insufficient funds or balance update failed: %w", err)
+		return nil, fmt.Errorf("insufficient funds or balance update failed: %w", err)
 	}
 
-	// Posting and accrual of the Recipient's balance
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
-		TransactionID: txID.ID,
+		TransactionID: pgTxID,
 		AccountID:     pgtype.Int8{Int64: params.ToAccountID, Valid: true},
 		Amount:        amountPositive,
 		CurrencyCode:  pgtype.Text{String: params.CurrencyCode, Valid: true},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create posting for receiver: %w", err)
+		return nil, fmt.Errorf("failed to create posting for receiver: %w", err)
 	}
 
 	_, err = qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
 		Balance:   amountPositive,
 		AccountID: params.ToAccountID,
 	})
-
 	if err != nil {
-		return fmt.Errorf("failed to add balance to receiver: %w", err)
+		return nil, fmt.Errorf("failed to add balance to receiver: %w", err)
 	}
-	return tx.Commit(ctx)
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	var senderNewBalance decimal.Decimal
+	if val, err := senderUpdatedRow.Balance.Value(); err == nil && val != nil {
+		_ = senderNewBalance.Scan(val)
+	}
+
+	return &domain.TransferResult{
+		TransactionID:    txUUID,
+		SenderNewBalance: senderNewBalance,
+	}, nil
 }

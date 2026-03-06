@@ -11,9 +11,9 @@ type AccountRepository interface {
 	Ping(ctx context.Context) error
 	Create(ctx context.Context, account *Account) (*Account, error)
 
-	Deposit(ctx context.Context, params RepoDepositParams) error
-	TransferTx(ctx context.Context, arg TransferParams) error
-	WithdrawTx(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResponse, error)
+	DepositTx(ctx context.Context, params RepoDepositParams) (*DepositResult, error)
+	TransferTx(ctx context.Context, arg TransferParams) (*TransferResult, error)
+	WithdrawTx(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResult, error)
 
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)

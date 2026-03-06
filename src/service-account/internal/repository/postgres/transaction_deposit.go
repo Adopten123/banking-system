@@ -2,21 +2,24 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 )
 
-func (r *AccountRepo) Deposit(
+func (r *AccountRepo) DepositTx(
 	ctx context.Context,
 	params domain.RepoDepositParams,
-) error {
+) (*domain.DepositResult, error) {
 	// Open transaction
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -24,16 +27,19 @@ func (r *AccountRepo) Deposit(
 
 	var amount pgtype.Numeric
 	if err := amount.Scan(params.AmountStr); err != nil {
-		return fmt.Errorf("invalid amount format: %w", err)
+		return nil, fmt.Errorf("invalid amount format: %w", err)
 	}
 
+	txUUID := uuid.New()
 	pgUUID := pgtype.UUID{
-		Bytes: uuid.New(),
+		Bytes: txUUID,
 		Valid: true,
 	}
 
 	var rate pgtype.Numeric
-	_ = rate.Scan("1")
+	if err := rate.Scan("1"); err != nil {
+		return nil, fmt.Errorf("failed to scan rate: %w", err)
+	}
 
 	// Make transactions
 	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
@@ -44,7 +50,11 @@ func (r *AccountRepo) Deposit(
 		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to insert transaction: %w", err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateTransaction
+		}
+		return nil, fmt.Errorf("failed to insert transaction: %w", err)
 	}
 
 	// Make posting
@@ -56,22 +66,27 @@ func (r *AccountRepo) Deposit(
 		ExchangeRate:  rate,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to insert posting: %w", err)
+		return nil, fmt.Errorf("failed to insert posting: %w", err)
 	}
 
 	// Update balance
-	_, err = qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
+	updatedAcc, err := qtx.AddAccountBalance(ctx, AddAccountBalanceParams{
 		Balance:   amount,
 		AccountID: params.AccountID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update account balance: %w", err)
+		return nil, fmt.Errorf("failed to update account balance: %w", err)
 	}
 
 	// Commit updates
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("failed to commit deposit transaction: %w", err)
+		return nil, fmt.Errorf("failed to commit deposit transaction: %w", err)
 	}
 
-	return nil
+	newBalance, _ := decimal.NewFromString(updatedAcc.Balance.Int.String())
+
+	return &domain.DepositResult{
+		TransactionID: txUUID,
+		NewBalance:    newBalance,
+	}, nil
 }

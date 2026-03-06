@@ -10,6 +10,12 @@ type WithdrawRequest struct {
 	Amount string `json:"amount"`
 }
 
+type WithdrawResult struct {
+	TransactionID uuid.UUID       `json:"transaction_id"`
+	NewBalance    decimal.Decimal `json:"new_balance"`
+	Currency      string          `json:"currency"`
+}
+
 type WithdrawResponse struct {
 	TransactionID uuid.UUID       `json:"transaction_id"`
 	NewBalance    decimal.Decimal `json:"new_balance"`

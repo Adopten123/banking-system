@@ -362,7 +362,7 @@ const docTemplate = `{
         },
         "/api/accounts/{id}/deposit": {
             "post": {
-                "description": "Зачисляет средства на указанный счет. Требует передачи Idempotency-Key в заголовках.",
+                "description": "Зачисляет указанную сумму на счет",
                 "consumes": [
                     "application/json"
                 ],
@@ -376,25 +376,26 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Public ID счета (UUID)",
+                        "format": "uuid",
+                        "description": "ID счета (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Уникальный ключ запроса",
+                        "description": "Ключ идемпотентности",
                         "name": "Idempotency-Key",
                         "in": "header",
                         "required": true
                     },
                     {
                         "description": "Сумма пополнения",
-                        "name": "request",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_http.DepositRequest"
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest"
                         }
                     }
                 ],
@@ -402,37 +403,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешное пополнение",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse"
                         }
                     },
                     "400": {
-                        "description": "Неверный запрос",
+                        "description": "Неверный запрос или сумма",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Счет не найден",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Дубликат транзакции",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
                         }
                     }
                 }
@@ -555,7 +550,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handler_http.TransferRequest"
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest"
                         }
                     }
                 ],
@@ -718,6 +713,25 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse": {
+            "type": "object",
+            "properties": {
+                "new_balance": {
+                    "type": "number"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory": {
             "type": "object",
             "properties": {
@@ -740,6 +754,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "currency_code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "to_account_id": {
                     "type": "string"
                 }
             }
@@ -783,14 +814,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handler_http.DepositRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "string"
-                }
-            }
-        },
         "internal_handler_http.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -798,23 +821,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_handler_http.TransferRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "string"
-                },
-                "currency_code": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "to_account_id": {
                     "type": "string"
                 }
             }

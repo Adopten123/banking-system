@@ -10,24 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// DepositRequest - waiting sum for deposit
-type DepositRequest struct {
-	Amount string `json:"amount"`
-}
-
-// @Summary Пополнение счета
-// @Description Зачисляет средства на указанный счет. Требует передачи Idempotency-Key в заголовках.
-// @Tags 		transactions
-// @Accept 		json
-// @Produce 	json
-// @Param 		id path string true "Public ID счета (UUID)"
-// @Param 		Idempotency-Key header string true "Уникальный ключ запроса"
-// @Param 		request body DepositRequest true "Сумма пополнения"
-// @Success 	200 {object} map[string]string "Успешное пополнение"
-// @Failure 	400 {object} map[string]string "Неверный запрос"
-// @Failure 	404 {object} map[string]string "Счет не найден"
-// @Failure 	500 {object} map[string]string "Внутренняя ошибка"
-// @Router 		/api/accounts/{id}/deposit [post]
+// @Summary      Пополнение счета
+// @Description  Зачисляет указанную сумму на счет
+// @Tags         transactions
+// @Accept       json
+// @Produce      json
+// @Param        id              path      string          true "ID счета (UUID)" Format(uuid)
+// @Param        Idempotency-Key header    string          true "Ключ идемпотентности"
+// @Param        body            body      domain.DepositRequest  true "Сумма пополнения"
+// @Success      200  {object}  domain.DepositResponse "Успешное пополнение"
+// @Failure      400  {object}  ErrorResponse   "Неверный запрос или сумма"
+// @Failure      404  {object}  ErrorResponse   "Счет не найден"
+// @Failure      409  {object}  ErrorResponse   "Дубликат транзакции"
+// @Failure      500  {object}  ErrorResponse   "Внутренняя ошибка"
+// @Router       /api/accounts/{id}/deposit [post]
 func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	// Getting UUID from url
 	accountIDParam := chi.URLParam(r, "id")
@@ -45,14 +41,14 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parsing request
-	var req DepositRequest
+	var req domain.DepositRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
 	}
 
 	// Sending data into service
-	err = h.service.Deposit(r.Context(), publicID,
+	result, err := h.service.Deposit(r.Context(), publicID,
 		domain.ServiceDepositInput{
 			AmountStr:      req.Amount,
 			IdempotencyKey: idempotencyKey,
@@ -76,16 +72,20 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid amount format", err)
 			return
 		}
+		if errors.Is(err, domain.ErrDuplicateTransaction) {
+			respondWithError(w, http.StatusConflict, "DUPLICATE_REQUEST", "Transaction with this Idempotency-Key already exists", err)
+			return
+		}
 
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to process deposit", err)
 		return
 	}
 
-	// Making response
+	resp := domain.DepositResponse{
+		TransactionID: result.TransactionID,
+		NewBalance:    result.NewBalance,
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status":  "success",
-		"message": "Deposit processed successfully",
-	})
+	json.NewEncoder(w).Encode(resp)
 }
