@@ -52,3 +52,7 @@ func (p *RabbitMQPublisher) PublishAccountStatusChanged(ctx context.Context, eve
 func (p *RabbitMQPublisher) PublishDepositCompleted(ctx context.Context, event domain.DepositCompletedEvent) error {
 	return p.publishMessage(ctx, event)
 }
+
+func (p *RabbitMQPublisher) PublishWithdrawalCompleted(ctx context.Context, event domain.WithdrawalCompletedEvent) error {
+	return p.publishMessage(ctx, event)
+}

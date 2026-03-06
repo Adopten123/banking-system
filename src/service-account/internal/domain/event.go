@@ -60,9 +60,22 @@ func (e DepositCompletedEvent) EventName() string {
 	return "DepositCompletedEvent"
 }
 
+type WithdrawalCompletedEvent struct {
+	TransactionID uuid.UUID
+	AccountID     int64
+	Amount        string
+	Currency      string
+	Timestamp     time.Time
+}
+
+func (e WithdrawalCompletedEvent) EventName() string {
+	return "withdrawal_completed"
+}
+
 type EventPublisher interface {
 	PublishTransferCreated(ctx context.Context, event TransferCreatedEvent) error
 	PublishAccountCreated(ctx context.Context, event AccountCreatedEvent) error
 	PublishAccountStatusChanged(ctx context.Context, event AccountStatusChangedEvent) error
 	PublishDepositCompleted(ctx context.Context, event DepositCompletedEvent) error
+	PublishWithdrawalCompleted(ctx context.Context, event WithdrawalCompletedEvent) error
 }
