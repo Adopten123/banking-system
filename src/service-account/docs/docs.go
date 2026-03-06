@@ -123,6 +123,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/accounts/{id}/activate": {
+            "post": {
+                "description": "Переводит счет в статус \"active\" (1). Разблокирует счет для операций.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account_statuses"
+                ],
+                "summary": "Активировать счет",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Public ID счета",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Счет активирован",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/accounts/{id}/balance": {
             "get": {
                 "description": "Возвращает текущий баланс счета по его публичному UUID",
@@ -178,7 +237,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "accounts"
+                    "account_statuses"
                 ],
                 "summary": "Блокировать счет",
                 "parameters": [
@@ -237,7 +296,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "accounts"
+                    "account_statuses"
                 ],
                 "summary": "Закрыть счет",
                 "parameters": [
@@ -428,6 +487,65 @@ const docTemplate = `{
                         "description": "Внутренняя ошибка",
                         "schema": {
                             "$ref": "#/definitions/internal_handler_http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/accounts/{id}/freeze": {
+            "post": {
+                "description": "Переводит счет в статус \"frozen\" (2). Обычно используется финмониторингом или безопасностью.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account_statuses"
+                ],
+                "summary": "Заморозить счет (Антифрод)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Public ID счета",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Счет заморожен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }

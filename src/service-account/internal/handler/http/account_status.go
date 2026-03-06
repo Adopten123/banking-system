@@ -10,9 +10,75 @@ import (
 	"github.com/google/uuid"
 )
 
+// @Summary      Заморозить счет (Антифрод)
+// @Description  Переводит счет в статус "frozen" (2). Обычно используется финмониторингом или безопасностью.
+// @Tags         account_statuses
+// @Produce      json
+// @Param        id path string true "Public ID счета"
+// @Success      200 {object} map[string]string "Счет заморожен"
+// @Failure      400 {object} map[string]string "Неверный формат ID"
+// @Failure      404 {object} map[string]string "Счет не найден"
+// @Failure      500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router       /api/accounts/{id}/freeze [post]
+func (h *Handler) freezeAccount(w http.ResponseWriter, r *http.Request) {
+	accIDParam := chi.URLParam(r, "id")
+	publicID, err := uuid.Parse(accIDParam)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
+		return
+	}
+
+	err = h.service.FreezeAccount(r.Context(), publicID)
+	if err != nil {
+		// Обрабатываем ожидаемые ошибки (например, если счет закрыт)
+		// Если у тебя есть кастомная ошибка для терминального состояния, добавь errors.Is(...)
+		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to freeze account", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Account frozen successfully",
+	})
+}
+
+// @Summary      Активировать счет
+// @Description  Переводит счет в статус "active" (1). Разблокирует счет для операций.
+// @Tags         account_statuses
+// @Produce      json
+// @Param        id path string true "Public ID счета"
+// @Success      200 {object} map[string]string "Счет активирован"
+// @Failure      400 {object} map[string]string "Неверный формат ID"
+// @Failure      404 {object} map[string]string "Счет не найден"
+// @Failure      500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router       /api/accounts/{id}/activate [post]
+func (h *Handler) activateAccount(w http.ResponseWriter, r *http.Request) {
+	accIDParam := chi.URLParam(r, "id")
+	publicID, err := uuid.Parse(accIDParam)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
+		return
+	}
+
+	err = h.service.ActivateAccount(r.Context(), publicID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to activate account", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Account activated successfully",
+	})
+}
+
 // @Summary Блокировать счет
 // @Description Переводит счет в статус "blocked" (3)
-// @Tags 		accounts
+// @Tags 		account_statuses
 // @Produce 	json
 // @Param 		id path string true "Public ID счета"
 // @Success 	200 {object} map[string]string "Счет заблокирован"
@@ -42,15 +108,15 @@ func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// @Summary Закрыть счет
+// @Summary 	Закрыть счет
 // @Description Переводит счет в статус "closed" (4). Требует строго нулевого баланса!
-// @Tags accounts
-// @Produce json
-// @Param id path string true "Public ID счета"
-// @Success 200 {object} map[string]string "Счет закрыт"
-// @Failure 400 {object} map[string]string "Неверный ID или ненулевой баланс"
-// @Failure 404 {object} map[string]string "Счет не найден"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Tags 		account_statuses
+// @Produce 	json
+// @Param 		id path string true "Public ID счета"
+// @Success 	200 {object} map[string]string "Счет закрыт"
+// @Failure 	400 {object} map[string]string "Неверный ID или ненулевой баланс"
+// @Failure 	404 {object} map[string]string "Счет не найден"
+// @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
 // @Router /api/accounts/{id}/close [post]
 func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 	accountIDParam := chi.URLParam(r, "id")

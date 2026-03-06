@@ -190,6 +190,45 @@ paths:
       summary: Получение информации о счете
       tags:
       - accounts
+  /api/accounts/{id}/activate:
+    post:
+      description: Переводит счет в статус "active" (1). Разблокирует счет для операций.
+      parameters:
+      - description: Public ID счета
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Счет активирован
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный формат ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Активировать счет
+      tags:
+      - account_statuses
   /api/accounts/{id}/balance:
     get:
       description: Возвращает текущий баланс счета по его публичному UUID
@@ -260,7 +299,7 @@ paths:
             type: object
       summary: Блокировать счет
       tags:
-      - accounts
+      - account_statuses
   /api/accounts/{id}/close:
     post:
       description: Переводит счет в статус "closed" (4). Требует строго нулевого баланса!
@@ -299,7 +338,7 @@ paths:
             type: object
       summary: Закрыть счет
       tags:
-      - accounts
+      - account_statuses
   /api/accounts/{id}/credit-limit:
     put:
       consumes:
@@ -397,6 +436,46 @@ paths:
       summary: Пополнение счета
       tags:
       - transactions
+  /api/accounts/{id}/freeze:
+    post:
+      description: Переводит счет в статус "frozen" (2). Обычно используется финмониторингом
+        или безопасностью.
+      parameters:
+      - description: Public ID счета
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Счет заморожен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный формат ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Заморозить счет (Антифрод)
+      tags:
+      - account_statuses
   /api/accounts/{id}/transactions:
     get:
       description: Возвращает список транзакций по счету с поддержкой пагинации

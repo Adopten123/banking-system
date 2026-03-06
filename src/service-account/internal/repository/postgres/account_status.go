@@ -6,6 +6,7 @@ import (
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 )
 
 func (r *AccountRepo) UpdateStatus(ctx context.Context, accountID int64, statusID int32) error {
@@ -36,9 +37,12 @@ func (r *AccountRepo) CloseAccountTx(ctx context.Context, accountID int64) error
 		return fmt.Errorf("failed to lock balance for update: %w", err)
 	}
 
-	bl, _ := balancePg.Balance.Float64Value()
+	var currentBalance decimal.Decimal
+	if val, err := balancePg.Balance.Value(); err == nil && val != nil {
+		_ = currentBalance.Scan(val)
+	}
 
-	if bl.Float64 != 0 {
+	if !currentBalance.IsZero() {
 		return domain.ErrAccountHasBalance
 	}
 

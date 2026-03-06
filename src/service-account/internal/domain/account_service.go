@@ -21,6 +21,8 @@ type AccountService interface {
 	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, params TransactionFilter) ([]TransactionHistory, error)
 
 	UpdateCreditLimit(ctx context.Context, publicID uuid.UUID, limitStr string) error
+	ActivateAccount(ctx context.Context, publicID uuid.UUID) error
+	FreezeAccount(ctx context.Context, publicID uuid.UUID) error
 	BlockAccount(ctx context.Context, publicID uuid.UUID) error
 	CloseAccount(ctx context.Context, publicID uuid.UUID) error
 }
