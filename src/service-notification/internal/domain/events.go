@@ -44,3 +44,11 @@ type WithdrawalCompletedEvent struct {
 	Currency      string    `json:"currency"`
 	Timestamp     time.Time `json:"timestamp"`
 }
+
+type CreditLimitChangedEvent struct {
+	AccountID string    `json:"account_id"`
+	OldLimit  string    `json:"old_limit"`
+	NewLimit  string    `json:"new_limit"`
+	Currency  string    `json:"currency"`
+	Timestamp time.Time `json:"timestamp"`
+}

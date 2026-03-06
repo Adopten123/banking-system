@@ -72,10 +72,23 @@ func (e WithdrawalCompletedEvent) EventName() string {
 	return "WithdrawalCompletedEvent"
 }
 
+type CreditLimitChangedEvent struct {
+	AccountID uuid.UUID `json:"account_id"`
+	OldLimit  string    `json:"old_limit"`
+	NewLimit  string    `json:"new_limit"`
+	Currency  string    `json:"currency"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+func (e CreditLimitChangedEvent) EventName() string {
+	return "CreditLimitChangedEvent"
+}
+
 type EventPublisher interface {
 	PublishTransferCreated(ctx context.Context, event TransferCreatedEvent) error
 	PublishAccountCreated(ctx context.Context, event AccountCreatedEvent) error
 	PublishAccountStatusChanged(ctx context.Context, event AccountStatusChangedEvent) error
 	PublishDepositCompleted(ctx context.Context, event DepositCompletedEvent) error
 	PublishWithdrawalCompleted(ctx context.Context, event WithdrawalCompletedEvent) error
+	PublishCreditLimitChanged(ctx context.Context, event CreditLimitChangedEvent) error
 }

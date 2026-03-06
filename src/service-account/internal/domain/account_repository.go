@@ -19,7 +19,9 @@ type AccountRepository interface {
 	GetBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)
 	GetTransactions(ctx context.Context, accountID int64, filter TransactionFilter) (*TransactionHistoryResult, error)
 
+	GetCreditLimit(ctx context.Context, accountID int64) (string, error)
 	UpdateCreditLimit(ctx context.Context, accountID int64, limitStr string) error
+
 	UpdateStatus(ctx context.Context, accountID int64, statusID int32) error
 	CloseAccountTx(ctx context.Context, accountID int64) error
 }

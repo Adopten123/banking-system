@@ -56,3 +56,7 @@ func (p *RabbitMQPublisher) PublishDepositCompleted(ctx context.Context, event d
 func (p *RabbitMQPublisher) PublishWithdrawalCompleted(ctx context.Context, event domain.WithdrawalCompletedEvent) error {
 	return p.publishMessage(ctx, event)
 }
+
+func (p *RabbitMQPublisher) PublishCreditLimitChanged(ctx context.Context, event domain.CreditLimitChangedEvent) error {
+	return p.publishMessage(ctx, event)
+}

@@ -11,19 +11,56 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const updateCreditLimit = `-- name: UpdateCreditLimit :exec
+const getAccountInfoForLimitUpdate = `-- name: GetAccountInfoForLimitUpdate :one
+SELECT
+    a.id,
+    a.currency_code,
+    ab.credit_limit::text AS credit_limit_str
+FROM accounts a
+         JOIN account_balances ab ON a.id = ab.account_id
+WHERE a.public_id = $1
+`
+
+type GetAccountInfoForLimitUpdateRow struct {
+	ID             int64       `json:"id"`
+	CurrencyCode   pgtype.Text `json:"currency_code"`
+	CreditLimitStr string      `json:"credit_limit_str"`
+}
+
+func (q *Queries) GetAccountInfoForLimitUpdate(ctx context.Context, publicID pgtype.UUID) (GetAccountInfoForLimitUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getAccountInfoForLimitUpdate, publicID)
+	var i GetAccountInfoForLimitUpdateRow
+	err := row.Scan(&i.ID, &i.CurrencyCode, &i.CreditLimitStr)
+	return i, err
+}
+
+const getCreditLimit = `-- name: GetCreditLimit :one
+SELECT credit_limit::text
+FROM account_balances
+WHERE account_id = $1
+`
+
+func (q *Queries) GetCreditLimit(ctx context.Context, accountID int64) (string, error) {
+	row := q.db.QueryRow(ctx, getCreditLimit, accountID)
+	var credit_limit string
+	err := row.Scan(&credit_limit)
+	return credit_limit, err
+}
+
+const updateAccountCreditLimit = `-- name: UpdateAccountCreditLimit :exec
 UPDATE account_balances
-SET credit_limit = $1,
+SET
+    credit_limit = $1,
     updated_at = now()
 WHERE account_id = $2
 `
 
-type UpdateCreditLimitParams struct {
-	CreditLimit pgtype.Numeric `json:"credit_limit"`
-	AccountID   int64          `json:"account_id"`
+type UpdateAccountCreditLimitParams struct {
+	NewLimit  pgtype.Numeric `json:"new_limit"`
+	AccountID int64          `json:"account_id"`
 }
 
-func (q *Queries) UpdateCreditLimit(ctx context.Context, arg UpdateCreditLimitParams) error {
-	_, err := q.db.Exec(ctx, updateCreditLimit, arg.CreditLimit, arg.AccountID)
+func (q *Queries) UpdateAccountCreditLimit(ctx context.Context, arg UpdateAccountCreditLimitParams) error {
+	_, err := q.db.Exec(ctx, updateAccountCreditLimit, arg.NewLimit, arg.AccountID)
 	return err
 }

@@ -58,3 +58,15 @@ func (s *NotificationService) handleWithdrawalCompleted(payload []byte) error {
 	log.Printf("[PUSH] Account %d successfully debited by %s %s\n", event.AccountID, event.Amount, event.Currency)
 	return nil
 }
+
+func (s *NotificationService) handleCreditLimitChanged(payload []byte) error {
+	var event domain.CreditLimitChangedEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal CreditLimitChangedEvent: %w", err)
+	}
+
+	log.Printf("[EMAIL] Your credit limit for account %s has been successfully updated: old limit %s, new limit %s %s\n",
+		event.AccountID, event.OldLimit, event.NewLimit, event.Currency)
+
+	return nil
+}
