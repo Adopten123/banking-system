@@ -77,9 +77,16 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money to complete the transfer", err)
 			return
 		}
-
+		if errors.Is(err, domain.ErrAccountInactive) {
+			respondWithError(w, http.StatusBadRequest, "ACCOUNT_INACTIVE", "Account is blocked or inactive", err)
+			return
+		}
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Sender or receiver account not found", err)
+			return
+		}
+		if errors.Is(err, domain.ErrDuplicateTransaction) {
+			respondWithError(w, http.StatusConflict, "DUPLICATE_REQUEST", "Transaction with this Idempotency-Key already exists", err)
 			return
 		}
 

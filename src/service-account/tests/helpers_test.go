@@ -91,3 +91,15 @@ func updateAccountStatus(t *testing.T, pool *pgxpool.Pool, publicID uuid.UUID, s
 	_, err := pool.Exec(context.Background(), query, statusID, publicID)
 	require.NoError(t, err, "failed to update account status in test setup")
 }
+
+// setAccountCreditLimit - upgrade credit limit
+func setAccountCreditLimit(t *testing.T, db *pgxpool.Pool, accountID uuid.UUID, limit decimal.Decimal) {
+	query := `
+		UPDATE account_balances 
+		SET credit_limit = $1 
+		WHERE account_id = (SELECT id FROM accounts WHERE public_id = $2)
+	`
+
+	_, err := db.Exec(context.Background(), query, limit.String(), accountID)
+	require.NoError(t, err, "failed to set credit limit for account %s", accountID.String())
+}
