@@ -24,3 +24,15 @@ type TransactionFilter struct {
 	StartDate *time.Time
 	EndDate   *time.Time
 }
+
+type TransactionHistoryResult struct {
+	Transactions []TransactionHistory
+	TotalCount   int64
+}
+
+type TransactionHistoryResponse struct {
+	Data       []TransactionHistory 	   `json:"data"`
+	Limit      int32                       `json:"limit"`
+	Offset     int32                       `json:"offset"`
+	TotalCount int64                       `json:"total_count"`
+}

@@ -11,7 +11,8 @@ func (s *AccountService) GetAccountTransactions(
 	ctx context.Context,
 	publicID uuid.UUID,
 	params domain.TransactionFilter,
-) ([]domain.TransactionHistory, error) {
+) (*domain.TransactionHistoryResult, error) {
+
 	acc, err := s.repo.GetByPublicID(ctx, publicID)
 	if err != nil {
 		return nil, err

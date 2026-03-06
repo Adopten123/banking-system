@@ -12,7 +12,7 @@ func (r *AccountRepo) GetTransactions(
 	ctx context.Context,
 	accountID int64,
 	filter domain.TransactionFilter,
-) ([]domain.TransactionHistory, error) {
+) (*domain.TransactionHistoryResult, error) {
 
 	var startPg, endPg pgtype.Timestamp
 	if filter.StartDate != nil {
@@ -35,6 +35,11 @@ func (r *AccountRepo) GetTransactions(
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}
 
+	var totalCount int64
+	if len(rows) > 0 {
+		totalCount = rows[0].TotalCount
+	}
+
 	history := make([]domain.TransactionHistory, 0, len(rows))
 	for _, row := range rows {
 		history = append(history, domain.TransactionHistory{
@@ -48,5 +53,8 @@ func (r *AccountRepo) GetTransactions(
 		})
 	}
 
-	return history, nil
+	return &domain.TransactionHistoryResult{
+		Transactions: history,
+		TotalCount:   totalCount,
+	}, nil
 }

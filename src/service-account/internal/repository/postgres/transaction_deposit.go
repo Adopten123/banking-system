@@ -46,7 +46,7 @@ func (r *AccountRepo) DepositTx(
 		ID:             pgUUID,
 		CategoryID:     pgtype.Int4{Int32: 1, Valid: true},
 		StatusID:       pgtype.Int4{Int32: 2, Valid: true},
-		Description:    pgtype.Text{String: "Пополнение счета", Valid: true},
+		Description:    pgtype.Text{String: "ATM Deposit", Valid: true},
 		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
 	})
 	if err != nil {

@@ -598,10 +598,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory"
-                            }
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistoryResponse"
                         }
                     },
                     "400": {
@@ -873,6 +870,26 @@ const docTemplate = `{
                 },
                 "transaction_id": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
                 }
             }
         },

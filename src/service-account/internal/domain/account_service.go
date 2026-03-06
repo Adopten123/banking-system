@@ -18,7 +18,7 @@ type AccountService interface {
 
 	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetAccountBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)
-	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, params TransactionFilter) ([]TransactionHistory, error)
+	GetAccountTransactions(ctx context.Context, publicID uuid.UUID, params TransactionFilter) (*TransactionHistoryResult, error)
 
 	UpdateCreditLimit(ctx context.Context, publicID uuid.UUID, limitStr string) error
 	ActivateAccount(ctx context.Context, publicID uuid.UUID) error

@@ -19,7 +19,8 @@ SELECT
     t.description,
     t.created_at,
     p.amount::text AS amount_str,
-    p.currency_code
+    p.currency_code,
+    COUNT(*) OVER() AS total_count
 FROM transactions t
 JOIN postings p ON t.id = p.transaction_id
 WHERE p.account_id = $1
@@ -45,6 +46,7 @@ type GetAccountTransactionsRow struct {
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	AmountStr     string             `json:"amount_str"`
 	CurrencyCode  pgtype.Text        `json:"currency_code"`
+	TotalCount    int64              `json:"total_count"`
 }
 
 func (q *Queries) GetAccountTransactions(ctx context.Context, arg GetAccountTransactionsParams) ([]GetAccountTransactionsRow, error) {
@@ -70,6 +72,7 @@ func (q *Queries) GetAccountTransactions(ctx context.Context, arg GetAccountTran
 			&i.CreatedAt,
 			&i.AmountStr,
 			&i.CurrencyCode,
+			&i.TotalCount,
 		); err != nil {
 			return nil, err
 		}

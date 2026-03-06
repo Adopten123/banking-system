@@ -21,7 +21,7 @@ import (
 // @Param 		offset query int false "Смещение (по умолчанию 0)"
 // @Param 		start_date query string false "Начальная дата (RFC3339, например: 2026-02-01T00:00:00Z)"
 // @Param 		end_date query string false "Конечная дата (RFC3339)"
-// @Success 	200 {array} domain.TransactionHistory"
+// @Success 	200 {object} domain.TransactionHistoryResponse
 // @Failure 	400 {object} map[string]string "Неверный запрос"
 // @Failure 	404 {object} map[string]string "Счет не найден"
 // @Failure 	500 {object} map[string]string "Внутренняя ошибка сервера"
@@ -40,7 +40,11 @@ func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 
 	if l := query.Get("limit"); l != "" {
 		if parsedLimit, err := strconv.ParseInt(l, 10, 32); err == nil && parsedLimit > 0 {
-			limit = int32(parsedLimit)
+			if parsedLimit > 100 {
+				limit = 100
+			} else {
+				limit = int32(parsedLimit)
+			}
 		}
 	}
 
@@ -88,10 +92,19 @@ func (h *Handler) getTransactions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if history == nil {
-		history = []domain.TransactionHistory{}
+	historyData := history.Transactions
+	if historyData == nil {
+		historyData = []domain.TransactionHistory{}
+	}
+
+	resp := domain.TransactionHistoryResponse{
+		Data:       historyData,
+		Limit:      limit,
+		Offset:     offset,
+		TotalCount: history.TotalCount,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(history)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
