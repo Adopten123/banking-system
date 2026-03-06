@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type TransferCreatedEvent struct {
 	TransactionID  string    `json:"transaction_id"`
@@ -28,6 +30,14 @@ type AccountStatusChangedEvent struct {
 }
 
 type DepositCompletedEvent struct {
+	TransactionID string    `json:"transaction_id"`
+	AccountID     int       `json:"account_id"`
+	Amount        string    `json:"amount"`
+	Currency      string    `json:"currency"`
+	Timestamp     time.Time `json:"timestamp"`
+}
+
+type WithdrawalCompletedEvent struct {
 	TransactionID string    `json:"transaction_id"`
 	AccountID     int       `json:"account_id"`
 	Amount        string    `json:"amount"`

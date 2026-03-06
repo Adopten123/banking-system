@@ -72,6 +72,7 @@ func (s *AccountService) CloseAccount(ctx context.Context, publicID uuid.UUID) e
 	if err != nil {
 		return err
 	}
+
 	err = s.publisher.PublishAccountStatusChanged(ctx, domain.AccountStatusChangedEvent{
 		AccountID: acc.ID,
 		OldStatus: acc.StatusID,

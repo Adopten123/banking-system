@@ -48,3 +48,13 @@ func (s *NotificationService) handleDepositCompleted(payload []byte) error {
 	log.Printf("[PUSH] Account %d successfully replenished by %s %s\n", event.AccountID, event.Amount, event.Currency)
 	return nil
 }
+
+func (s *NotificationService) handleWithdrawalCompleted(payload []byte) error {
+	var event domain.WithdrawalCompletedEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal WithdrawalCompletedEvent: %w", err)
+	}
+
+	log.Printf("[PUSH] Account %d successfully debited by %s %s\n", event.AccountID, event.Amount, event.Currency)
+	return nil
+}

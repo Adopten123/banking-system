@@ -23,6 +23,7 @@ func (s *NotificationService) registerHandlers() {
 	s.handlers["AccountCreatedEvent"] = s.handleAccountCreated
 	s.handlers["AccountStatusChangedEvent"] = s.handleAccountStatusChanged
 	s.handlers["DepositCompletedEvent"] = s.handleDepositCompleted
+	s.handlers["WithdrawalCompletedEvent"] = s.handleWithdrawalCompleted
 }
 
 // HandleMessage - calls the required handler

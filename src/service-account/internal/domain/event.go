@@ -61,15 +61,15 @@ func (e DepositCompletedEvent) EventName() string {
 }
 
 type WithdrawalCompletedEvent struct {
-	TransactionID uuid.UUID
-	AccountID     int64
-	Amount        string
-	Currency      string
-	Timestamp     time.Time
+	TransactionID uuid.UUID `json:"transaction_id"`
+	AccountID     int64     `json:"account_id"`
+	Amount        string    `json:"amount"`
+	Currency      string    `json:"currency"`
+	Timestamp     time.Time `json:"timestamp"`
 }
 
 func (e WithdrawalCompletedEvent) EventName() string {
-	return "withdrawal_completed"
+	return "WithdrawalCompletedEvent"
 }
 
 type EventPublisher interface {
