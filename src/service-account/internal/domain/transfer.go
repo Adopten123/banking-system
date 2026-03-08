@@ -6,12 +6,15 @@ import (
 )
 
 type TransferParams struct {
-	FromAccountID  int64
-	ToAccountID    int64
-	AmountStr      string
-	CurrencyCode   string
-	IdempotencyKey string
-	Description    string
+	FromAccountID     int64
+	ToAccountID       int64
+	SenderAmountStr   string
+	ReceiverAmountStr string
+	ExchangeRateStr   string
+	CurrencyCode      string
+	ReceiverCurrency  string
+	IdempotencyKey    string
+	Description       string
 }
 
 // TransferInput - data for transfers
