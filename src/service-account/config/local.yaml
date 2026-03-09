@@ -7,3 +7,7 @@ db:
 
 rabbitmq:
   url: "amqp://rmq_admin:secretpassword@rabbitmq:5672/"
+
+exchanger:
+  url: "http://exchanger:8085/api/v1/rates"
+  timeout: 3s

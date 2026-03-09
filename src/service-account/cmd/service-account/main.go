@@ -8,6 +8,7 @@ import (
 	"github.com/Adopten123/banking-system/service-account/internal/config"
 	transport "github.com/Adopten123/banking-system/service-account/internal/handler/http"
 	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/broker"
+	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/exchanger"
 	"github.com/Adopten123/banking-system/service-account/internal/repository/postgres"
 	"github.com/Adopten123/banking-system/service-account/internal/server"
 	"github.com/Adopten123/banking-system/service-account/internal/service"
@@ -54,9 +55,12 @@ func main() {
 		}
 	}()
 
+	// Connect to Exchanger
+	exchangerClient := exchanger.NewHTTPClient(cfg.Exchanger.URL, cfg.Exchanger.Timeout)
+
 	// Init layers
 	repo := postgres.NewAccountRepo(pool)
-	svc := service.NewAccountService(repo, rabbitPublisher)
+	svc := service.NewAccountService(repo, rabbitPublisher, exchangerClient)
 	handler := transport.NewHandler(svc)
 	router := handler.InitRoutes()
 

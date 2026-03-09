@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	DB       DBConfig
-	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
+	DB        DBConfig
+	RabbitMQ  RabbitMQConfig  `yaml:"rabbitmq"`
+	Exchanger ExchangerConfig `yaml:"exchanger"`
 }
 
 type DBConfig struct {
@@ -22,6 +23,11 @@ type DBConfig struct {
 
 type RabbitMQConfig struct {
 	URL string `yaml:"url" env:"RABBITMQ_URL"`
+}
+
+type ExchangerConfig struct {
+	URL     string        `yaml:"url" env:"EXCHANGER_URL"`
+	Timeout time.Duration `yaml:"timeout" env:"EXCHANGER_TIMEOUT" env-default:"3s"`
 }
 
 func Load(configPath string) *Config {
