@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 func (s *AccountService) Transfer(
@@ -24,13 +24,32 @@ func (s *AccountService) Transfer(
 		return nil, err
 	}
 
+	transferAmount, err := decimal.NewFromString(input.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	receiverAmount := transferAmount
+	exchangeRate := decimal.NewFromInt(1)
+
+	if fromAcc.CurrencyCode != toAcc.CurrencyCode {
+		exchangeRate, err = s.exchanger.GetRate(ctx, fromAcc.CurrencyCode, toAcc.CurrencyCode)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get exchange rate: %w", err)
+		}
+		receiverAmount = transferAmount.Mul(exchangeRate).RoundBank(2)
+	}
+
 	params := domain.TransferParams{
-		FromAccountID:  fromAcc.ID,
-		ToAccountID:    toAcc.ID,
-		AmountStr:      input.Amount,
-		CurrencyCode:   input.Currency,
-		IdempotencyKey: input.IdempotencyKey,
-		Description:    input.Description,
+		FromAccountID:     fromAcc.ID,
+		ToAccountID:       toAcc.ID,
+		SenderAmountStr:   transferAmount.String(),
+		ReceiverAmountStr: receiverAmount.String(),
+		ExchangeRateStr:   exchangeRate.String(),
+		CurrencyCode:      fromAcc.CurrencyCode,
+		ReceiverCurrency:  toAcc.CurrencyCode,
+		IdempotencyKey:    input.IdempotencyKey,
+		Description:       input.Description,
 	}
 
 	result, err := s.repo.TransferTx(ctx, params)
@@ -39,13 +58,20 @@ func (s *AccountService) Transfer(
 	}
 
 	event := domain.TransferCreatedEvent{
-		TransactionID:  uuid.New(),
-		FromAccountID:  fromAcc.ID,
-		ToAccountID:    toAcc.ID,
-		Amount:         input.Amount,
-		Currency:       input.Currency,
-		IdempotencyKey: input.IdempotencyKey,
-		Timestamp:      time.Now().UTC(),
+		TransactionID:    result.TransactionID,
+		FromAccountID:    fromAcc.ID,
+		ToAccountID:      toAcc.ID,
+
+		SenderAmount:     transferAmount.String(),
+		SenderCurrency:   fromAcc.CurrencyCode,
+
+		ReceiverAmount:   receiverAmount.String(),
+		ReceiverCurrency: toAcc.CurrencyCode,
+
+		ExchangeRate:     exchangeRate.String(),
+
+		IdempotencyKey:   input.IdempotencyKey,
+		Timestamp:        time.Now().UTC(),
 	}
 
 	err = s.publisher.PublishTransferCreated(ctx, event)

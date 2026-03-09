@@ -12,13 +12,20 @@ type DomainEvent interface {
 }
 
 type TransferCreatedEvent struct {
-	TransactionID  uuid.UUID `json:"transaction_id"`
-	FromAccountID  int64     `json:"from_account_id"`
-	ToAccountID    int64     `json:"to_account_id"`
-	Amount         string    `json:"amount"`
-	Currency       string    `json:"currency"`
-	IdempotencyKey string    `json:"idempotency_key"`
-	Timestamp      time.Time `json:"timestamp"`
+	TransactionID    uuid.UUID `json:"transaction_id"`
+	FromAccountID    int64     `json:"from_account_id"`
+	ToAccountID      int64     `json:"to_account_id"`
+
+	SenderAmount     string    `json:"sender_amount"`
+	SenderCurrency   string    `json:"sender_currency"`
+
+	ReceiverAmount   string    `json:"receiver_amount"`
+	ReceiverCurrency string    `json:"receiver_currency"`
+
+	ExchangeRate     string    `json:"exchange_rate"`
+
+	IdempotencyKey   string    `json:"idempotency_key"`
+	Timestamp        time.Time `json:"timestamp"`
 }
 
 func (e TransferCreatedEvent) EventName() string {

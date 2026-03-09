@@ -55,13 +55,18 @@ func (r *AccountRepo) TransferTx(
 		return nil, domain.ErrAccountInactive
 	}
 
-	if senderAcc.CurrencyCode.String != receiverAcc.CurrencyCode.String {
-		return nil, errors.New("cross-currency transfers are not supported yet")
+	//if senderAcc.CurrencyCode.String != receiverAcc.CurrencyCode.String {
+	//	return nil, errors.New("cross-currency transfers are not supported yet")
+	//}
+
+	senderAmount, err := decimal.NewFromString(params.SenderAmountStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid sender amount: %w", err)
 	}
 
-	transferAmount, err := decimal.NewFromString(params.AmountStr)
+	receiverAmount, err := decimal.NewFromString(params.ReceiverAmountStr)
 	if err != nil {
-		return nil, fmt.Errorf("invalid transfer amount: %w", err)
+		return nil, fmt.Errorf("invalid receiver amount: %w", err)
 	}
 
 	var senderBalance, senderCreditLimit decimal.Decimal
@@ -74,15 +79,18 @@ func (r *AccountRepo) TransferTx(
 		_ = senderCreditLimit.Scan(val)
 	}
 
-	if senderBalance.Add(senderCreditLimit).LessThan(transferAmount) {
+	if senderBalance.Add(senderCreditLimit).LessThan(senderAmount) {
 		return nil, domain.ErrInsufficientFunds
 	}
 
 	var amountPositive pgtype.Numeric
-	amountPositive.Scan(transferAmount.String())
+	amountPositive.Scan(receiverAmount.String())
 
 	var amountNegative pgtype.Numeric
-	amountNegative.Scan(transferAmount.Neg().String())
+	amountNegative.Scan(senderAmount.Neg().String())
+
+	var exRate pgtype.Numeric
+	exRate.Scan(params.ExchangeRateStr)
 
 	txUUID := uuid.New()
 	pgTxID := pgtype.UUID{Bytes: txUUID, Valid: true}
@@ -125,6 +133,7 @@ func (r *AccountRepo) TransferTx(
 		AccountID:     pgtype.Int8{Int64: params.ToAccountID, Valid: true},
 		Amount:        amountPositive,
 		CurrencyCode:  pgtype.Text{String: params.CurrencyCode, Valid: true},
+		ExchangeRate:  exRate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create posting for receiver: %w", err)
