@@ -15,6 +15,7 @@ services:
       - "5499:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U bank_admin -d accounts_db" ]
@@ -71,9 +72,41 @@ services:
       postgres:
         condition: service_healthy
 
+  vault-db-migration:
+    image: migrate/migrate
+    container_name: bank_vault_db_migration
+    volumes:
+      - ../src/service-card-secure/migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgresql://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable
+      - up
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # ==========================================
   # МИКРОСЕРВИСЫ
   # ==========================================
+
+  service-card-secure:
+    container_name: service_card_secure
+    build:
+      context: ../src/service-card-secure
+      dockerfile: Dockerfile
+    environment:
+      - VAULT_MASTER_KEY=supersecret32bytemasterkey123456
+      - DATABASE_URL=postgres://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable
+      - GRPC_PORT=50051
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault-db-migration:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
   service-exchanger:
     container_name: service_exchanger
     build:

@@ -1,0 +1,1 @@
+{"rustc":10895048813736897673,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[17888247849196157488,"build_script_build",false,7117768344505852602]],"local":[{"RerunIfChanged":{"output":"debug\\build\\service-card-secure-b720ac9196ea5924\\output","paths":["../../proto/card_vault.proto"]}}],"rustflags":[],"config":0,"compile_kind":0}
