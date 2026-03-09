@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -60,19 +59,6 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create db pool: %v", err)
 	}
 	defer testDBPool.Close()
-
-	log.Println("Applying database schema...")
-
-	schemaPath := filepath.Join("..", "internal", "repository", "postgres", "schema", "000001_init.up.sql")
-	schemaBytes, err := os.ReadFile(schemaPath)
-	if err != nil {
-		log.Fatalf("Failed to read schema file at %s: %v", schemaPath, err)
-	}
-
-	if _, err := testDBPool.Exec(ctx, string(schemaBytes)); err != nil {
-		log.Fatalf("Failed to execute schema: %v", err)
-	}
-	log.Println("Schema applied successfully!")
 
 	// 3. Make migrations
 	log.Println("Applying data migrations...")

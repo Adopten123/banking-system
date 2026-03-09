@@ -11,12 +11,13 @@ import (
 )
 
 func setupTestEnv(dbPool *pgxpool.Pool) (http.Handler, *MockPublisher) {
-	// 1. Make mock for broker
+	// 1. Make mocks
 	mockPublisher := NewMockPublisher()
+	mockExchanger := &MockExchangeClient{}
 	// 2. Init repo with test DB pool
 	repo := postgres.NewAccountRepo(dbPool)
 	// 3. Starting service
-	svc := service.NewAccountService(repo, mockPublisher)
+	svc := service.NewAccountService(repo, mockPublisher, mockExchanger)
 
 	// 4. Init http layer
 	handler := transport_http.NewHandler(svc)

@@ -16,6 +16,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U bank_admin -d accounts_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4
@@ -53,6 +58,19 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  db-migration:
+    image: migrate/migrate
+    container_name: bank_db_migration
+    volumes:
+      - ../src/service-account/migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgresql://bank_admin:secretpassword@postgres:5432/accounts_db?sslmode=disable
+      - up
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # ==========================================
   # МИКРОСЕРВИСЫ
   # ==========================================
@@ -77,9 +95,14 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - postgres
-      - redis
-      - service-exchanger
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      service-exchanger:
+        condition: service_started
+      db-migration:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   service-notification:

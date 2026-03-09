@@ -37,6 +37,16 @@ func (m *MockPublisher) PublishDepositCompleted(ctx context.Context, event domai
 	return nil
 }
 
+func (m *MockPublisher) PublishWithdrawalCompleted(ctx context.Context, event domain.WithdrawalCompletedEvent) error {
+	m.Events = append(m.Events, event)
+	return nil
+}
+
+func (m *MockPublisher) PublishCreditLimitChanged(ctx context.Context, event domain.CreditLimitChangedEvent) error {
+	m.Events = append(m.Events, event)
+	return nil
+}
+
 // Clear - cleanses events before new tests
 func (m *MockPublisher) Clear() {
 	m.Events = make([]domain.DomainEvent, 0)

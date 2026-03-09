@@ -28,6 +28,8 @@ func TestTransfer_TableDriven(t *testing.T) {
 	receiverAccountID := createTestAccount(t, testDBPool, receiverID, "RUB")
 
 	usdAccountID := createTestAccount(t, testDBPool, validUserID, "USD")
+	eurAccountID := createTestAccount(t, testDBPool, validUserID, "EUR")
+
 	blockedAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
 	frozenAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
 
@@ -113,7 +115,7 @@ func TestTransfer_TableDriven(t *testing.T) {
 		{
 			name:           "Fail - Missing Idempotency Key",
 			senderPathID:   senderAccountID.String(),
-			idempotencyKey: "", // Пустой ключ
+			idempotencyKey: "",
 			payload: map[string]interface{}{
 				"to_account_id": receiverAccountID.String(),
 				"amount":        "1000",
@@ -196,12 +198,41 @@ func TestTransfer_TableDriven(t *testing.T) {
 		},
 
 		{
-			name:           "Fail - Cross-Currency Transfer",
+			name:           "Success - Cross-Currency Transfer using Credit Limit (RUB to USD)",
+			senderPathID:   creditAccountID.String(),
+			idempotencyKey: uuid.New().String(),
+			payload: map[string]interface{}{
+				"to_account_id": usdAccountID.String(),
+				"amount":        "20000",
+				"currency_code": "RUB",
+			},
+			expectedCode:        http.StatusOK,
+			expectedEventsCount: 1,
+			expectedSenderBal:   decimal.NewFromInt(-20000),
+			expectedReceiverBal: decimal.NewFromInt(216),
+		},
+
+		{
+			name:           "Success - Cross-Currency Transfer (RUB to USD)",
 			senderPathID:   senderAccountID.String(),
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
 				"to_account_id": usdAccountID.String(),
-				"amount":        "1000",
+				"amount":        "10000",
+				"currency_code": "RUB",
+			},
+			expectedCode:        http.StatusOK,
+			expectedEventsCount: 1,
+			expectedSenderBal:   decimal.NewFromInt(40000),
+			expectedReceiverBal: decimal.NewFromInt(108),
+		},
+		{
+			name:           "Fail - Exchange Service Unavailable (Target EUR)",
+			senderPathID:   senderAccountID.String(),
+			idempotencyKey: uuid.New().String(),
+			payload: map[string]interface{}{
+				"to_account_id": eurAccountID.String(),
+				"amount":        "10000",
 				"currency_code": "RUB",
 			},
 			expectedCode:        http.StatusInternalServerError,
@@ -327,6 +358,7 @@ func TestTransfer_TableDriven(t *testing.T) {
 			setAccountBalance(t, testDBPool, creditAccountID, decimal.Zero)
 			setAccountBalance(t, testDBPool, frozenAccountID, InitialSenderBalance())
 			setAccountBalance(t, testDBPool, usdAccountID, decimal.Zero)
+			setAccountBalance(t, testDBPool, eurAccountID, decimal.Zero)
 
 			bodyBytes, err := json.Marshal(tt.payload)
 			require.NoError(t, err)
