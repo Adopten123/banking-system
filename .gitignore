@@ -7,3 +7,9 @@ __pycache__/
 venv/
 node_modules/
 .DS_Store
+**/target/
+**/*.rs.bk
+*.profraw
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
