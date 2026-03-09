@@ -1694,6 +1694,7 @@ dependencies = [
  "chrono",
  "config",
  "dotenvy",
+ "hex",
  "prost",
  "rand",
  "serde",
