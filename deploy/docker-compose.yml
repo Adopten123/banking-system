@@ -56,6 +56,15 @@ services:
   # ==========================================
   # МИКРОСЕРВИСЫ
   # ==========================================
+  service-exchanger:
+    container_name: service_exchanger
+    build:
+      context: ../src/service-investment-and-exchange
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
+
   service-account:
     container_name: service_account
     build:
@@ -64,11 +73,13 @@ services:
     environment:
       - CONFIG_PATH=config/prod.yaml
       - REDIS_URL=redis:6379
+      - EXCHANGER_URL=http://service-exchanger:8085/api/v1/rates
     ports:
       - "8081:8080"
     depends_on:
       - postgres
       - redis
+      - service-exchanger
     restart: unless-stopped
 
   service-notification:
