@@ -67,6 +67,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/accounts/{account_id}/cards": {
+            "post": {
+                "description": "Создает новую физическую или виртуальную карту для указанного счета. Внутри обращается к защищенному Card Vault для генерации PAN и CVV.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Выпуск новой карты",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Public ID счета (UUID)",
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Параметры выпуска карты",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.IssueCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Карта успешно выпущена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.Card"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID счета или формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/accounts/{id}": {
             "get": {
                 "description": "Возвращает текущий баланс, валюту и статус счета по его публичному ID",
@@ -828,6 +882,33 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.Card": {
+            "type": "object",
+            "properties": {
+                "accountID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "expiry": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isVirtual": {
+                    "type": "boolean"
+                },
+                "panmask": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest": {
             "type": "object",
             "properties": {
@@ -843,6 +924,17 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.IssueCardRequest": {
+            "type": "object",
+            "properties": {
+                "is_virtual": {
+                    "type": "boolean"
+                },
+                "payment_system": {
                     "type": "string"
                 }
             }

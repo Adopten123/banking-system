@@ -12,3 +12,6 @@ exchanger:
   url: "http://exchanger:8085/api/v1/rates"
   timeout: 3s
 
+vault:
+  address: "card-vault:50051"
+  timeout: 5s

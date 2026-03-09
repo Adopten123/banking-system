@@ -15,14 +15,13 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        account_id   path      string            true  "Public ID счета (UUID)" Format(uuid)
-// @Param        request      body      IssueCardRequest  true  "Параметры выпуска карты"
+// @Param        request      body      domain.IssueCardRequest  true  "Параметры выпуска карты"
 // @Success      201          {object}  domain.Card       "Карта успешно выпущена"
 // @Failure      400          {string}  string            "Неверный ID счета или формат запроса"
 // @Failure      500          {string}  string            "Внутренняя ошибка сервера"
 // @Router       /api/accounts/{account_id}/cards [post]
-
 func (h *Handler) issueCard(w http.ResponseWriter, r *http.Request) {
-	accountIDStr := chi.URLParam(r, "account_id")
+	accountIDStr := chi.URLParam(r, "id")
 	accountUUID, err := uuid.Parse(accountIDStr)
 	if err != nil {
 		http.Error(w, "invalid account ID", http.StatusBadRequest)

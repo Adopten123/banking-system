@@ -13,6 +13,8 @@ import (
 	"github.com/Adopten123/banking-system/service-account/internal/repository/postgres"
 	"github.com/Adopten123/banking-system/service-account/internal/server"
 	"github.com/Adopten123/banking-system/service-account/internal/service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const defaultCfgPath = "config/local.yaml"
@@ -59,9 +61,22 @@ func main() {
 	// Connect to Exchanger
 	exchangerClient := exchanger.NewHTTPClient(cfg.Exchanger.URL, cfg.Exchanger.Timeout)
 
+	// Connect to Vault
+	log.Printf("Connecting to Card Vault at %s...", cfg.Vault.Address)
+	vaultConn, err := grpc.NewClient(
+		cfg.Vault.Address,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("Failed to connect to Card Vault: %v", err)
+	}
+	defer vaultConn.Close()
+
+	vaultClient := vault.NewCardVaultClient(vaultConn)
+
 	// Init layers
 	repo := postgres.NewAccountRepo(pool)
-	svc := service.NewAccountService(repo, rabbitPublisher, exchangerClient)
+	svc := service.NewAccountService(repo, rabbitPublisher, exchangerClient, vaultClient)
 	handler := transport.NewHandler(svc)
 	router := handler.InitRoutes()
 

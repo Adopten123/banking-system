@@ -92,8 +92,8 @@ services:
   service-card-secure:
     container_name: service_card_secure
     build:
-      context: ../src/service-card-secure
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: src/service-card-secure/Dockerfile
     environment:
       - VAULT_MASTER_KEY=supersecret32bytemasterkey123456
       - DATABASE_URL=postgres://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable
