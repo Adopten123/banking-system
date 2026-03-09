@@ -2,6 +2,7 @@ use crate::domain::errors::VaultError;
 use crate::domain::models::{CardStatus, VaultCard};
 use uuid::Uuid;
 
+#[async_trait::async_trait]
 pub trait CardRepository: Send + Sync {
     async fn insert(&self, card: VaultCard) -> Result<(), VaultError>;
     async fn find_by_token(&self, token_id: &Uuid) -> Result<Option<VaultCard>, VaultError>;

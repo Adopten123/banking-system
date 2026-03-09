@@ -11,3 +11,4 @@ rabbitmq:
 exchanger:
   url: "http://exchanger:8085/api/v1/rates"
   timeout: 3s
+

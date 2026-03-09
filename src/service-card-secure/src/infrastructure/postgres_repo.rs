@@ -38,6 +38,7 @@ impl PostgresCardRepository {
     }
 }
 
+#[async_trait::async_trait]
 impl CardRepository for PostgresCardRepository {
     async fn insert(&self, card: VaultCard) -> Result<(), VaultError> {
         let query = r#"

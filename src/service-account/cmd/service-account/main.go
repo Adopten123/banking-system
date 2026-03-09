@@ -9,6 +9,7 @@ import (
 	transport "github.com/Adopten123/banking-system/service-account/internal/handler/http"
 	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/broker"
 	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/exchanger"
+	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/vault"
 	"github.com/Adopten123/banking-system/service-account/internal/repository/postgres"
 	"github.com/Adopten123/banking-system/service-account/internal/server"
 	"github.com/Adopten123/banking-system/service-account/internal/service"
