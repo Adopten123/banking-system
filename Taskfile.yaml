@@ -19,6 +19,16 @@ tasks:
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} logs -f
 
+  proto:go:
+    desc: "Генерация gRPC-клиента на Go для service-account"
+    cmds:
+      - mkdir -p src/service-account/internal/infrastructure/grpc/pb
+      - >
+        protoc -I=proto 
+        --go_out=src/service-account/internal/infrastructure/grpc/pb --go_opt=paths=source_relative 
+        --go-grpc_out=src/service-account/internal/infrastructure/grpc/pb --go-grpc_opt=paths=source_relative 
+        proto/card_vault/v1/card_vault.proto
+
   # --- Service Account ---
   run:account:
     desc: "Локальный запуск Service Account (без Docker)"

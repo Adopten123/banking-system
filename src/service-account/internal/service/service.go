@@ -6,17 +6,20 @@ type AccountService struct {
 	repo      domain.AccountRepository
 	publisher domain.EventPublisher
 	exchanger domain.ExchangeRateClient
+	vault     domain.CardVaultClient
 }
 
 func NewAccountService(
 	repo domain.AccountRepository,
 	publisher domain.EventPublisher,
 	exchanger domain.ExchangeRateClient,
+	vault domain.CardVaultClient,
 ) *AccountService {
 
 	return &AccountService{
 		repo:      repo,
 		publisher: publisher,
 		exchanger: exchanger,
+		vault:     vault,
 	}
 }

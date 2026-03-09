@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package card_vault.v1;
+
+option go_package = "github.com/Adopten123/banking-system/service-account/internal/infrastructure/grpc/pb;card_vault_pb";
+
+service CardVaultService {
+  // --- BASE OPERATIONS ---
+
+  rpc IssueCard(IssueCardRequest) returns (IssueCardResponse);
+
+  rpc GetCardDetails(GetCardDetailsRequest) returns (GetCardDetailsResponse);
+
+  rpc VerifyCard(VerifyCardRequest) returns (VerifyCardResponse);
+
+  // --- SECURITY AND  COMPLIANCE ---
+
+  rpc UpdateCardStatus(UpdateCardStatusRequest) returns (UpdateCardStatusResponse);
+
+  rpc DeleteCardData(DeleteCardDataRequest) returns (DeleteCardDataResponse);
+
+  // --- PIN-CODE ---
+
+  rpc SetPin(SetPinRequest) returns (SetPinResponse);
+
+  rpc VerifyPin(VerifyPinRequest) returns (VerifyPinResponse);
+}
+
+message IssueCardRequest {
+  string payment_system = 1;
+  bool is_virtual = 2;
+}
+
+message IssueCardResponse {
+  string token_id = 1;
+  string pan_mask = 2;
+  int32 expiry_month = 3;
+  int32 expiry_year = 4;
+}
+
+message GetCardDetailsRequest {
+  string token_id = 1;
+}
+
+message GetCardDetailsResponse {
+  string pan = 1;
+  string cvv = 2;
+  int32 expiry_month = 3;
+  int32 expiry_year = 4;
+}
+
+message VerifyCardRequest {
+  string pan = 1;
+  string cvv = 2;
+  int32 expiry_month = 3;
+  int32 expiry_year = 4;
+}
+
+message VerifyCardResponse {
+  bool is_valid = 1;
+  string token_id = 2;
+}
+
+message UpdateCardStatusRequest {
+  string token_id = 1;
+  string status = 2;
+}
+
+message UpdateCardStatusResponse {
+  bool success = 1;
+}
+
+message DeleteCardDataRequest {
+  string token_id = 1;
+}
+
+message DeleteCardDataResponse {
+  bool success = 1;
+}
+
+message SetPinRequest {
+  string token_id = 1;
+  string pin = 2;
+}
+
+message SetPinResponse {
+  bool success = 1;
+}
+
+message VerifyPinRequest {
+  string token_id = 1;
+  string pin = 2;
+}
+
+message VerifyPinResponse {
+  bool is_valid = 1;
+}

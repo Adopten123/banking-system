@@ -24,4 +24,7 @@ type AccountRepository interface {
 
 	UpdateStatus(ctx context.Context, accountID int64, statusID int32) error
 	CloseAccountTx(ctx context.Context, accountID int64) error
+
+	// ---- CARDS METHODS ----
+	CreateCard(ctx context.Context, card *Card) error
 }

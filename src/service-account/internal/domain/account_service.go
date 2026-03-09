@@ -25,4 +25,7 @@ type AccountService interface {
 	FreezeAccount(ctx context.Context, publicID uuid.UUID) error
 	BlockAccount(ctx context.Context, publicID uuid.UUID) error
 	CloseAccount(ctx context.Context, publicID uuid.UUID) error
+
+	// ---- CARDS METHODS ----
+	IssueCard(ctx context.Context, input IssueCardInput) (*Card, error)
 }
