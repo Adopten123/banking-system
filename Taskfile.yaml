@@ -76,3 +76,12 @@ tasks:
     desc: "Логи Service Notification"
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} logs -f service-notification
+
+# ==========================================
+# Service Vault
+# ==========================================
+
+  logs:vault:
+    desc: "Логи Service Vault"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f service-card-secure

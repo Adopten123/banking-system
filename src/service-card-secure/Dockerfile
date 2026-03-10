@@ -17,6 +17,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 COPY --from=builder /app/src/service-card-secure/target/release/service-card-secure .
+COPY --from=builder /app/src/service-card-secure/config ./config
 
 EXPOSE 50051
 

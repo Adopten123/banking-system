@@ -2,7 +2,7 @@ server:
   grpc_port: 50051
 
 database:
-  url: "postgres://bank_admin:secretpassword@localhost:5499/vault_db?sslmode=disable"
+  url: "postgres://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable"
   max_connections: 5
 
 security:

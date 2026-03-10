@@ -95,9 +95,9 @@ services:
       context: ../
       dockerfile: src/service-card-secure/Dockerfile
     environment:
-      - VAULT_MASTER_KEY=supersecret32bytemasterkey123456
-      - DATABASE_URL=postgres://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable
-      - GRPC_PORT=50051
+      - APP_SECURITY__MASTER_KEY=supersecret32bytemasterkey123456
+      - APP_DATABASE__URL=postgres://bank_admin:secretpassword@postgres:5432/vault_db?sslmode=disable
+      - APP_SERVER__GRPC_PORT=50051
     ports:
       - "50051:50051"
     depends_on:

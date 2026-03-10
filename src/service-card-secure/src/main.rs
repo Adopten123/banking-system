@@ -23,9 +23,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting Card Vault...");
 
     // 2. Init DB
+    let db_url = std::env::var("DATABASE_URL").unwrap_or(settings.database.url);
+
     let pool = PgPoolOptions::new()
         .max_connections(settings.database.max_connections)
-        .connect(&settings.database.url)
+        .connect(&db_url)
         .await
         .expect("Failed to connect to the Vault database");
 
