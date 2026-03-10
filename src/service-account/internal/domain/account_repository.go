@@ -27,4 +27,5 @@ type AccountRepository interface {
 
 	// ---- CARDS METHODS ----
 	CreateCard(ctx context.Context, card *Card) error
+	GetCardByID(ctx context.Context, cardID uuid.UUID) (*Card, error)
 }

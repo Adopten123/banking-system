@@ -25,3 +25,9 @@ var (
 	ErrInvalidDepositAmount = errors.New("deposit amount must be greater than zero")
 	ErrInvalidAmountFormat  = errors.New("invalid amount format")
 )
+
+// Cards Errors
+var (
+	ErrCardNotFound = errors.New("card not found")
+	ErrCardBlocked  = errors.New("card is blocked")
+)

@@ -36,6 +36,11 @@ tasks:
     cmds:
       - go run cmd/main.go
 
+  up:account:
+    desc: "Пересобрать и перезапустить Service Account"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-account
+
   sqlc:account:
     desc: "Генерация моделей БД через sqlc для Service Account"
     dir: src/service-account
@@ -77,6 +82,10 @@ tasks:
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} logs -f service-notification
 
+  up:notification:
+    desc: "Пересобрать и перезапустить Service Notification"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-notification
 # ==========================================
 # Service Vault
 # ==========================================
@@ -85,3 +94,8 @@ tasks:
     desc: "Логи Service Vault"
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} logs -f service-card-secure
+
+  up:vault:
+    desc: "Пересобрать и перезапустить Service Vault"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-card-secure

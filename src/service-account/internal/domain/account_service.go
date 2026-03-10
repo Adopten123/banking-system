@@ -28,4 +28,5 @@ type AccountService interface {
 
 	// ---- CARDS METHODS ----
 	IssueCard(ctx context.Context, input IssueCardInput) (*Card, error)
+	GetCardDetails(ctx context.Context, cardID uuid.UUID) (*CardDetails, error)
 }

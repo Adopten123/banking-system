@@ -1,8 +1,6 @@
 package domain
 
-import (
-	"context"
-)
+import "github.com/google/uuid"
 
 // IssueCardParams — params for card
 type IssueCardParams struct {
@@ -18,7 +16,15 @@ type IssuedCardData struct {
 	ExpiryYear  int32
 }
 
-// CardVaultClient — service-safe interface
-type CardVaultClient interface {
-	IssueCard(ctx context.Context, params IssueCardParams) (IssuedCardData, error)
+// IssueCardInput - data returned by HTTP-handler
+type IssueCardInput struct {
+	AccountPublicID uuid.UUID
+	PaymentSystem   string
+	IsVirtual       bool
 }
+
+type IssueCardRequest struct {
+	PaymentSystem string `json:"payment_system"`
+	IsVirtual     bool   `json:"is_virtual"`
+}
+

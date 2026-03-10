@@ -51,3 +51,31 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 	)
 	return i, err
 }
+
+const getCardByID = `-- name: GetCardByID :one
+SELECT
+    id,
+    account_id,
+    pan_mask,
+    expiry_date,
+    is_virtual,
+    status,
+    created_at
+FROM cards
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetCardByID(ctx context.Context, id pgtype.UUID) (Card, error) {
+	row := q.db.QueryRow(ctx, getCardByID, id)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.PanMask,
+		&i.ExpiryDate,
+		&i.IsVirtual,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}

@@ -52,6 +52,17 @@ definitions:
       status:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.CardDetails:
+    properties:
+      cvv:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+      pan:
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest:
     properties:
       amount:
@@ -701,4 +712,37 @@ paths:
       summary: Снятие наличных
       tags:
       - transactions
+  /api/cards/{card_id}/details:
+    get:
+      description: Возвращает полные данные карты (PAN, CVV) для показа в приложении.
+        Данные запрашиваются из защищенного Card Vault.
+      parameters:
+      - description: ID карты (UUID токена)
+        format: uuid
+        in: path
+        name: card_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.CardDetails'
+        "400":
+          description: Неверный ID карты
+          schema:
+            type: string
+        "403":
+          description: Карта заблокирована
+          schema:
+            type: string
+        "404":
+          description: Карта не найдена
+          schema:
+            type: string
+      summary: Получить реквизиты карты
+      tags:
+      - Cards
 swagger: "2.0"

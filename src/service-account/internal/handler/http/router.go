@@ -53,5 +53,9 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Post("/{id}/cards", h.issueCard)
 	})
 
+	r.Route("/api/cards", func(r chi.Router) {
+		r.Get("/{card_id}/details", h.getCardDetails)
+	})
+
 	return r
 }

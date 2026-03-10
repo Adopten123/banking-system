@@ -16,14 +16,10 @@ type Card struct {
 	CreatedAt time.Time
 }
 
-// IssueCardInput - data returned by HTTP-handler
-type IssueCardInput struct {
-	AccountPublicID uuid.UUID
-	PaymentSystem   string
-	IsVirtual       bool
-}
-
-type IssueCardRequest struct {
-	PaymentSystem string `json:"payment_system"`
-	IsVirtual     bool   `json:"is_virtual"`
+// CardDetails - full data about card
+type CardDetails struct {
+	PAN         string `json:"pan"`
+	CVV         string `json:"cvv"`
+	ExpiryMonth int32  `json:"expiry_month"`
+	ExpiryYear  int32  `json:"expiry_year"`
 }
