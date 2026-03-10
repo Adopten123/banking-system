@@ -13,5 +13,5 @@ exchanger:
   timeout: 3s
 
 vault:
-  address: "card-vault:50051"
+  address: "localhost:50051"
   timeout: 5s

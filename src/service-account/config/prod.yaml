@@ -1,5 +1,5 @@
 db:
-  dsn: "postgresql://bank_admin:secretpassword@postgres:5432/accounts_db?sslmode=disable"
+  dsn: "postgresql://bank_admin:secretpassword@localhost:5499/accounts_db?sslmode=disable"
   max_conns: 20
   min_conns: 5
   max_conn_idle_time: 15m
@@ -7,3 +7,11 @@ db:
 
 rabbitmq:
   url: "amqp://rmq_admin:secretpassword@rabbitmq:5672/"
+
+exchanger:
+  url: "http://exchanger:8085/api/v1/rates"
+  timeout: 3s
+
+vault:
+  address: "localhost:50051"
+  timeout: 5s
