@@ -36,3 +36,37 @@ func (r *AccountRepo) GetCardByID(ctx context.Context, cardID uuid.UUID) (*domai
 		CreatedAt: row.CreatedAt.Time,
 	}, nil
 }
+
+func (r *AccountRepo) GetCardsByAccountID(ctx context.Context, accountID int64) ([]*domain.Card, error) {
+	pgAccID := pgtype.Int8{
+		Int64: accountID,
+		Valid: true,
+	}
+
+	rows, err := r.queries.GetCardsByAccountID(ctx, pgAccID)
+	if err != nil {
+		return nil, fmt.Errorf("database execution failed: %w", err)
+	}
+
+	cards := make([]*domain.Card, 0, len(rows))
+
+	for _, row := range rows {
+		if !row.ID.Valid {
+			continue
+		}
+
+		cardUUID := uuid.UUID(row.ID.Bytes)
+
+		cards = append(cards, &domain.Card{
+			ID:        cardUUID,
+			AccountID: row.AccountID.Int64,
+			PANMask:   row.PanMask.String,
+			Expiry:    row.ExpiryDate.Time,
+			IsVirtual: row.IsVirtual.Bool,
+			Status:    row.Status.String,
+			CreatedAt: row.CreatedAt.Time,
+		})
+	}
+
+	return cards, nil
+}

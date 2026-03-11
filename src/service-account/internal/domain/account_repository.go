@@ -28,5 +28,6 @@ type AccountRepository interface {
 	// ---- CARDS METHODS ----
 	CreateCard(ctx context.Context, card *Card) error
 	GetCardByID(ctx context.Context, cardID uuid.UUID) (*Card, error)
+	GetCardsByAccountID(ctx context.Context, accountID int64) ([]*Card, error)
 	UpdateCardStatus(ctx context.Context, cardID uuid.UUID, newStatus string) error
 }

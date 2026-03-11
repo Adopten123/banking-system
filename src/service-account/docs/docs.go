@@ -67,7 +67,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/accounts/{account_id}/cards": {
+        "/api/accounts/{account_id}/card": {
             "post": {
                 "description": "Создает новую физическую или виртуальную карту для указанного счета. Внутри обращается к защищенному Card Vault для генерации PAN и CVV.",
                 "consumes": [
@@ -108,6 +108,57 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Неверный ID счета или формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/accounts/{account_id}/cards": {
+            "get": {
+                "description": "Возвращает список всех карт (с маскированным PAN), привязанных к указанному счету.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Получить список карт счета",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Public ID счета (UUID)",
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.Card"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID счета",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден",
                         "schema": {
                             "type": "string"
                         }

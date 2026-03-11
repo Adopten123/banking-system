@@ -19,7 +19,7 @@ import (
 // @Success      201          {object}  domain.Card       "Карта успешно выпущена"
 // @Failure      400          {string}  string            "Неверный ID счета или формат запроса"
 // @Failure      500          {string}  string            "Внутренняя ошибка сервера"
-// @Router       /api/accounts/{account_id}/cards [post]
+// @Router       /api/accounts/{account_id}/card [post]
 func (h *Handler) issueCard(w http.ResponseWriter, r *http.Request) {
 	accountIDStr := chi.URLParam(r, "id")
 	accountUUID, err := uuid.Parse(accountIDStr)

@@ -80,6 +80,48 @@ func (q *Queries) GetCardByID(ctx context.Context, id pgtype.UUID) (Card, error)
 	return i, err
 }
 
+const getCardsByAccountID = `-- name: GetCardsByAccountID :many
+SELECT
+    id,
+    account_id,
+    pan_mask,
+    expiry_date,
+    is_virtual,
+    status,
+    created_at
+FROM cards
+WHERE account_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetCardsByAccountID(ctx context.Context, accountID pgtype.Int8) ([]Card, error) {
+	rows, err := q.db.Query(ctx, getCardsByAccountID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Card
+	for rows.Next() {
+		var i Card
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.PanMask,
+			&i.ExpiryDate,
+			&i.IsVirtual,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCardStatus = `-- name: UpdateCardStatus :exec
 UPDATE cards
 SET status = $2

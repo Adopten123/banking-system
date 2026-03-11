@@ -50,7 +50,8 @@ func (h *Handler) InitRoutes() *chi.Mux {
 
 		r.Put("/{id}/credit-limit", h.updateCreditLimit)
 
-		r.Post("/{id}/cards", h.issueCard)
+		r.Post("/{id}/card", h.issueCard)
+		r.Get("/{id}/cards", h.getAccountCards)
 	})
 
 	r.Route("/api/cards", func(r chi.Router) {

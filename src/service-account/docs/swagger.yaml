@@ -207,7 +207,7 @@ paths:
       summary: Создание нового счета
       tags:
       - accounts
-  /api/accounts/{account_id}/cards:
+  /api/accounts/{account_id}/card:
     post:
       consumes:
       - application/json
@@ -242,6 +242,41 @@ paths:
           schema:
             type: string
       summary: Выпуск новой карты
+      tags:
+      - Cards
+  /api/accounts/{account_id}/cards:
+    get:
+      description: Возвращает список всех карт (с маскированным PAN), привязанных
+        к указанному счету.
+      parameters:
+      - description: Public ID счета (UUID)
+        format: uuid
+        in: path
+        name: account_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.Card'
+            type: array
+        "400":
+          description: Неверный ID счета
+          schema:
+            type: string
+        "404":
+          description: Счет не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Получить список карт счета
       tags:
       - Cards
   /api/accounts/{id}:
