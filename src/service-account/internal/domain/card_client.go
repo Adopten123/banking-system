@@ -4,9 +4,9 @@ import "context"
 
 // CardVaultClient — service-safe interface
 type CardVaultClient interface {
-
 	IssueCard(ctx context.Context, params IssueCardParams) (IssuedCardData, error)
 	DeleteCardData(ctx context.Context, tokenID string) error
+	VerifyCard(ctx context.Context, input VerifyCardInput) (bool, string, error)
 
 	GetCardDetails(ctx context.Context, tokenID string) (*CardDetails, error)
 	UpdateCardStatus(ctx context.Context, tokenID string, status string) error

@@ -65,5 +65,9 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Post("/{card_id}/verify-pin", h.verifyCardPin)
 	})
 
+	r.Route("/api/internal", func(r chi.Router) {
+		r.Post("/payments/verify-card", h.verifyCard)
+	})
+
 	return r
 }

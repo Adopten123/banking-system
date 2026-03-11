@@ -134,6 +134,26 @@ definitions:
         description: active/blocked
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardRequest:
+    properties:
+      cvv:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+      pan:
+        type: string
+    type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardResult:
+    properties:
+      account_id:
+        type: integer
+      card_id:
+        type: string
+      is_valid:
+        type: boolean
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.VerifyPinRequest:
     properties:
       pin:
@@ -932,4 +952,37 @@ paths:
       summary: Проверить ПИН-код
       tags:
       - Cards
+  /api/internal/payments/verify-card:
+    post:
+      consumes:
+      - application/json
+      description: 'Эндпоинт для платежного шлюза. Принимает сырые реквизиты, проверяет
+        их криптографически через Vault и возвращает привязанный счет для списания
+        средств. Если карта заблокирована, удалена или данные неверны — возвращает
+        is_valid: false.'
+      parameters:
+      - description: Сырые реквизиты карты с терминала/сайта
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Результат проверки (is_valid и, если успешно, ID счета)
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardResult'
+        "400":
+          description: Неверный формат JSON или отсутствуют обязательные поля
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера (нет связи с Сейфом или БД)
+          schema:
+            type: string
+      summary: Проверить реквизиты карты (Внутреннее API)
+      tags:
+      - Internal
 swagger: "2.0"

@@ -1120,6 +1120,52 @@
                     }
                 }
             }
+        },
+        "/api/internal/payments/verify-card": {
+            "post": {
+                "description": "Эндпоинт для платежного шлюза. Принимает сырые реквизиты, проверяет их криптографически через Vault и возвращает привязанный счет для списания средств. Если карта заблокирована, удалена или данные неверны — возвращает is_valid: false.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Проверить реквизиты карты (Внутреннее API)",
+                "parameters": [
+                    {
+                        "description": "Сырые реквизиты карты с терминала/сайта",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Результат проверки (is_valid и, если успешно, ID счета)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат JSON или отсутствуют обязательные поля",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера (нет связи с Сейфом или БД)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1324,6 +1370,37 @@
                 "status": {
                     "description": "active/blocked",
                     "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardRequest": {
+            "type": "object",
+            "properties": {
+                "cvv": {
+                    "type": "string"
+                },
+                "expiry_month": {
+                    "type": "integer"
+                },
+                "expiry_year": {
+                    "type": "integer"
+                },
+                "pan": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.VerifyCardResult": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "card_id": {
+                    "type": "string"
+                },
+                "is_valid": {
+                    "type": "boolean"
                 }
             }
         },
