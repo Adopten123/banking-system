@@ -30,4 +30,5 @@ var (
 var (
 	ErrCardNotFound = errors.New("card not found")
 	ErrCardBlocked  = errors.New("card is blocked")
+	ErrInvalidCardStatus = errors.New("invalid card status")
 )

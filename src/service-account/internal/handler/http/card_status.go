@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -37,8 +38,15 @@ func (h *Handler) updateCardStatus(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.UpdateCardStatus(r.Context(), cardUUID, req.Status)
 	if err != nil {
-		fmt.Printf("ERROR: HandleUpdateCardStatus failed: %v\n", err)
-		http.Error(w, "failed to update card status", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, domain.ErrInvalidCardStatus):
+			http.Error(w, "invalid status: must be 'active' or 'blocked'", http.StatusBadRequest)
+		case errors.Is(err, domain.ErrCardNotFound):
+			http.Error(w, "card not found", http.StatusNotFound)
+		default:
+			fmt.Printf("ERROR: HandleUpdateCardStatus failed: %v\n", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
