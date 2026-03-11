@@ -28,9 +28,13 @@ type AccountService interface {
 
 	// ---- CARDS METHODS ----
 	IssueCard(ctx context.Context, input IssueCardInput) (*Card, error)
+	DeleteCard(ctx context.Context, cardID uuid.UUID) error
+
 	GetCardDetails(ctx context.Context, cardID uuid.UUID) (*CardDetails, error)
 	GetAccountCards(ctx context.Context, accountPublicID uuid.UUID) ([]*Card, error)
+
 	UpdateCardStatus(ctx context.Context, cardID uuid.UUID, status string) error
 
 	SetCardPin(ctx context.Context, cardID uuid.UUID, pin string) error
+	VerifyCardPin(ctx context.Context, cardID uuid.UUID, pin string) (bool, error)
 }

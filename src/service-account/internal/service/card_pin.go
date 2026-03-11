@@ -34,3 +34,25 @@ func (s *AccountService) SetCardPin(ctx context.Context, cardID uuid.UUID, pin s
 
 	return nil
 }
+
+func (s *AccountService) VerifyCardPin(ctx context.Context, cardID uuid.UUID, pin string) (bool, error) {
+	if !pinRegex.MatchString(pin) {
+		return false, domain.ErrInvalidPINFormat
+	}
+
+	card, err := s.repo.GetCardByID(ctx, cardID)
+	if err != nil {
+		return false, err
+	}
+
+	if card.Status != "active" {
+		return false, domain.ErrCardBlocked
+	}
+
+	isValid, err := s.vault.VerifyPin(ctx, cardID.String(), pin)
+	if err != nil {
+		return false, fmt.Errorf("failed to verify PIN via vault: %w", err)
+	}
+
+	return isValid, nil
+}

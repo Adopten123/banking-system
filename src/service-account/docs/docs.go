@@ -881,6 +881,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/cards/{card_id}": {
+            "delete": {
+                "description": "Полностью удаляет данные карты из Card Vault и помечает её как удаленную в ядре.",
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Удалить карту",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID карты (UUID)",
+                        "name": "card_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Card deleted successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/cards/{card_id}/details": {
             "get": {
                 "description": "Возвращает полные данные карты (PAN, CVV) для показа в приложении. Данные запрашиваются из защищенного Card Vault.",
@@ -1042,6 +1069,57 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cards/{card_id}/verify-pin": {
+            "post": {
+                "description": "Проверяет правильность ПИН-кода (например, перед подтверждением перевода).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Проверить ПИН-код",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID карты (UUID)",
+                        "name": "card_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ПИН-код для проверки",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyPinRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Результат проверки: is_valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
                         "schema": {
                             "type": "string"
                         }
@@ -1251,6 +1329,14 @@ const docTemplate = `{
             "properties": {
                 "status": {
                     "description": "active/blocked",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.VerifyPinRequest": {
+            "type": "object",
+            "properties": {
+                "pin": {
                     "type": "string"
                 }
             }

@@ -134,6 +134,11 @@ definitions:
         description: active/blocked
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.VerifyPinRequest:
+    properties:
+      pin:
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest:
     properties:
       amount:
@@ -758,6 +763,25 @@ paths:
       summary: Снятие наличных
       tags:
       - transactions
+  /api/cards/{card_id}:
+    delete:
+      description: Полностью удаляет данные карты из Card Vault и помечает её как
+        удаленную в ядре.
+      parameters:
+      - description: ID карты (UUID)
+        format: uuid
+        in: path
+        name: card_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Card deleted successfully
+          schema:
+            type: string
+      summary: Удалить карту
+      tags:
+      - Cards
   /api/cards/{card_id}/details:
     get:
       description: Возвращает полные данные карты (PAN, CVV) для показа в приложении.
@@ -871,6 +895,41 @@ paths:
           schema:
             type: string
       summary: Изменить статус карты
+      tags:
+      - Cards
+  /api/cards/{card_id}/verify-pin:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет правильность ПИН-кода (например, перед подтверждением
+        перевода).
+      parameters:
+      - description: ID карты (UUID)
+        format: uuid
+        in: path
+        name: card_id
+        required: true
+        type: string
+      - description: ПИН-код для проверки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.VerifyPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Результат проверки: is_valid'
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+      summary: Проверить ПИН-код
       tags:
       - Cards
 swagger: "2.0"
