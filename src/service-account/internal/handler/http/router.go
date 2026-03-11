@@ -55,14 +55,14 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	})
 
 	r.Route("/api/cards", func(r chi.Router) {
-		r.Delete("/{card_id}", h.deleteCard)
+		r.Delete("/{id}", h.deleteCard)
 
-		r.Get("/{card_id}/details", h.getCardDetails)
+		r.Get("/{id}/details", h.getCardDetails)
 
-		r.Patch("/{card_id}/status", h.updateCardStatus)
+		r.Patch("/{id}/status", h.updateCardStatus)
 
-		r.Post("/{card_id}/pin", h.setCardPin)
-		r.Post("/{card_id}/verify-pin", h.verifyCardPin)
+		r.Post("/{id}/pin", h.setCardPin)
+		r.Post("/{id}/verify-pin", h.verifyCardPin)
 	})
 
 	r.Route("/api/internal", func(r chi.Router) {

@@ -75,6 +75,7 @@ func TestMain(m *testing.M) {
 	// 5. Running tests
 	log.Println("Running tests...")
 	exitCode := m.Run()
+	//  go test -v ./tests/...
 
 	// 6. Exit with the test results
 	os.Exit(exitCode)

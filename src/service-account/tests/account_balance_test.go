@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetAccountBalance_TableDriven(t *testing.T) {
-	router, _ := setupTestEnv(testDBPool)
+	router, _, _ := setupTestEnv(testDBPool)
 
 	validUserID := createTestUser(t, testDBPool)
 	validAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")

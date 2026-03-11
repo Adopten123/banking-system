@@ -18,7 +18,7 @@ func InitialBalance() decimal.Decimal {
 }
 
 func TestDeposit_TableDriven(t *testing.T) {
-	router, mockPub := setupTestEnv(testDBPool)
+	router, mockPub, _ := setupTestEnv(testDBPool)
 
 	validUserID := createTestUser(t, testDBPool)
 	validAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")

@@ -18,7 +18,7 @@ func InitialSenderBalance() decimal.Decimal {
 }
 
 func TestTransfer_TableDriven(t *testing.T) {
-	router, mockPub := setupTestEnv(testDBPool)
+	router, mockPub, _ := setupTestEnv(testDBPool)
 
 	senderID := createTestUser(t, testDBPool)
 	receiverID := createTestUser(t, testDBPool)

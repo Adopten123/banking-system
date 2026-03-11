@@ -13,7 +13,7 @@ import (
 
 func TestCreateAccount_TableDriven(t *testing.T) {
 	// 1. Make test env
-	router, mockPub := setupTestEnv(testDBPool)
+	router, mockPub, _ := setupTestEnv(testDBPool)
 
 	// 2. Make user
 	validUserID := createTestUser(t, testDBPool)
