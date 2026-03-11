@@ -31,4 +31,6 @@ type AccountService interface {
 	GetCardDetails(ctx context.Context, cardID uuid.UUID) (*CardDetails, error)
 	GetAccountCards(ctx context.Context, accountPublicID uuid.UUID) ([]*Card, error)
 	UpdateCardStatus(ctx context.Context, cardID uuid.UUID, status string) error
+
+	SetCardPin(ctx context.Context, cardID uuid.UUID, pin string) error
 }

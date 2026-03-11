@@ -923,6 +923,72 @@
                 }
             }
         },
+        "/api/cards/{card_id}/pin": {
+            "post": {
+                "description": "Устанавливает или меняет 4-значный ПИН-код для карты. ПИН не сохраняется в ядре и хешируется в Card Vault.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Изменить ПИН-код",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID карты (UUID)",
+                        "name": "card_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ПИН-код (4 цифры)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.SetPinRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PIN set successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ПИН-кода",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Карта заблокирована",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Карта не найдена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/cards/{card_id}/status": {
             "patch": {
                 "description": "Блокирует или разблокирует карту. Синхронизирует статус с защищенным Card Vault.",
@@ -1099,6 +1165,14 @@
                     "type": "boolean"
                 },
                 "payment_system": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.SetPinRequest": {
+            "type": "object",
+            "properties": {
+                "pin": {
                     "type": "string"
                 }
             }

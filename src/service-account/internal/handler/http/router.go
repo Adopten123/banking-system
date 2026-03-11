@@ -58,6 +58,8 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/{card_id}/details", h.getCardDetails)
 
 		r.Patch("/{card_id}/status", h.updateCardStatus)
+
+		r.Post("/{card_id}/pin", h.setCardPin)
 	})
 
 	return r

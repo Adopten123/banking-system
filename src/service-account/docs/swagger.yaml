@@ -82,6 +82,11 @@ definitions:
       payment_system:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.SetPinRequest:
+    properties:
+      pin:
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.TransactionHistory:
     properties:
       amount:
@@ -784,6 +789,51 @@ paths:
           schema:
             type: string
       summary: Получить реквизиты карты
+      tags:
+      - Cards
+  /api/cards/{card_id}/pin:
+    post:
+      consumes:
+      - application/json
+      description: Устанавливает или меняет 4-значный ПИН-код для карты. ПИН не сохраняется
+        в ядре и хешируется в Card Vault.
+      parameters:
+      - description: ID карты (UUID)
+        format: uuid
+        in: path
+        name: card_id
+        required: true
+        type: string
+      - description: ПИН-код (4 цифры)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.SetPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PIN set successfully
+          schema:
+            type: string
+        "400":
+          description: Неверный формат ПИН-кода
+          schema:
+            type: string
+        "403":
+          description: Карта заблокирована
+          schema:
+            type: string
+        "404":
+          description: Карта не найдена
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Изменить ПИН-код
       tags:
       - Cards
   /api/cards/{card_id}/status:

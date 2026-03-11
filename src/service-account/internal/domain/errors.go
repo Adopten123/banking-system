@@ -28,7 +28,8 @@ var (
 
 // Cards Errors
 var (
-	ErrCardNotFound = errors.New("card not found")
-	ErrCardBlocked  = errors.New("card is blocked")
+	ErrCardNotFound      = errors.New("card not found")
+	ErrCardBlocked       = errors.New("card is blocked")
 	ErrInvalidCardStatus = errors.New("invalid card status")
+	ErrInvalidPINFormat  = errors.New("invalid PIN format: must be 4 digits")
 )
