@@ -23,3 +23,7 @@ type CardDetails struct {
 	ExpiryMonth int32  `json:"expiry_month"`
 	ExpiryYear  int32  `json:"expiry_year"`
 }
+
+type UpdateCardStatusRequest struct {
+	Status string `json:"status"` // active/blocked
+}

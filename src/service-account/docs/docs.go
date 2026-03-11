@@ -877,6 +877,60 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/cards/{card_id}/status": {
+            "patch": {
+                "description": "Блокирует или разблокирует карту. Синхронизирует статус с защищенным Card Vault.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cards"
+                ],
+                "summary": "Изменить статус карты",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID карты (UUID)",
+                        "name": "card_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новый статус",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.UpdateCardStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID карты или статус",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1063,6 +1117,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "to_account_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.UpdateCardStatusRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "description": "active/blocked",
                     "type": "string"
                 }
             }

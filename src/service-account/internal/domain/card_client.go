@@ -6,4 +6,5 @@ import "context"
 type CardVaultClient interface {
 	IssueCard(ctx context.Context, params IssueCardParams) (IssuedCardData, error)
 	GetCardDetails(ctx context.Context, tokenID string) (*CardDetails, error)
+	UpdateCardStatus(ctx context.Context, tokenID string, status string) error
 }

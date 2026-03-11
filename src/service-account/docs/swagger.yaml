@@ -123,6 +123,12 @@ definitions:
       to_account_id:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.UpdateCardStatusRequest:
+    properties:
+      status:
+        description: active/blocked
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest:
     properties:
       amount:
@@ -743,6 +749,43 @@ paths:
           schema:
             type: string
       summary: Получить реквизиты карты
+      tags:
+      - Cards
+  /api/cards/{card_id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Блокирует или разблокирует карту. Синхронизирует статус с защищенным
+        Card Vault.
+      parameters:
+      - description: ID карты (UUID)
+        format: uuid
+        in: path
+        name: card_id
+        required: true
+        type: string
+      - description: Новый статус
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.UpdateCardStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status updated successfully
+          schema:
+            type: string
+        "400":
+          description: Неверный ID карты или статус
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Изменить статус карты
       tags:
       - Cards
 swagger: "2.0"

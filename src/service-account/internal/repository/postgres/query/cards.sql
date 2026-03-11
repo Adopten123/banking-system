@@ -18,3 +18,8 @@ SELECT
     created_at
 FROM cards
 WHERE id = $1 LIMIT 1;
+
+-- name: UpdateCardStatus :exec
+UPDATE cards
+SET status = $2
+WHERE id = $1;

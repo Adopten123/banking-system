@@ -79,3 +79,19 @@ func (q *Queries) GetCardByID(ctx context.Context, id pgtype.UUID) (Card, error)
 	)
 	return i, err
 }
+
+const updateCardStatus = `-- name: UpdateCardStatus :exec
+UPDATE cards
+SET status = $2
+WHERE id = $1
+`
+
+type UpdateCardStatusParams struct {
+	ID     pgtype.UUID `json:"id"`
+	Status pgtype.Text `json:"status"`
+}
+
+func (q *Queries) UpdateCardStatus(ctx context.Context, arg UpdateCardStatusParams) error {
+	_, err := q.db.Exec(ctx, updateCardStatus, arg.ID, arg.Status)
+	return err
+}
