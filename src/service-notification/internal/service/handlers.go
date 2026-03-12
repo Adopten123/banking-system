@@ -15,7 +15,10 @@ func (s *NotificationService) handleTransferCreated(payload []byte) error {
 	}
 
 	log.Printf("[PUSH] Transfer %s: from account %d to account %d, amount: %s %s\n",
-		event.TransactionID, event.FromAccountID, event.ToAccountID, event.Amount, event.Currency)
+		event.TransactionID, event.FromAccountID, event.ToAccountID,
+		event.SenderAmount, event.SenderCurrency, event.ReceiverAmount, event.ReceiverCurrency,
+		event.ExchangeRate, event.IdempotencyKey, event.Timestamp,
+	)
 	return nil
 }
 

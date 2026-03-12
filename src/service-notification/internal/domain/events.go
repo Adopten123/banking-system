@@ -5,11 +5,18 @@ import (
 )
 
 type TransferCreatedEvent struct {
-	TransactionID  string    `json:"transaction_id"`
-	FromAccountID  int       `json:"from_account_id"`
-	ToAccountID    int       `json:"to_account_id"`
-	Amount         string    `json:"amount"`
-	Currency       string    `json:"currency"`
+	TransactionID string `json:"transaction_id"`
+	FromAccountID int    `json:"from_account_id"`
+	ToAccountID   int    `json:"to_account_id"`
+
+	SenderAmount   string `json:"sender_amount"`
+	SenderCurrency string `json:"sender_currency"`
+
+	ReceiverAmount   string `json:"receiver_amount"`
+	ReceiverCurrency string `json:"receiver_currency"`
+
+	ExchangeRate string `json:"exchange_rate"`
+
 	IdempotencyKey string    `json:"idempotency_key"`
 	Timestamp      time.Time `json:"timestamp"`
 }
