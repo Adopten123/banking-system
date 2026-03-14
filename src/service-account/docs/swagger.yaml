@@ -180,6 +180,10 @@ definitions:
     properties:
       amount:
         type: string
+      source_id:
+        type: string
+      source_type:
+        type: string
     type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse:
     properties:
@@ -654,51 +658,6 @@ paths:
       summary: Получить историю транзакций
       tags:
       - transactions
-  /api/accounts/{id}/withdraw:
-    post:
-      consumes:
-      - application/json
-      description: Списывает указанную сумму со счета. Учитывает кредитный лимит.
-      parameters:
-      - description: ID счета (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Ключ идемпотентности (UUID)
-        in: header
-        name: Idempotency-Key
-        required: true
-        type: string
-      - description: Сумма для снятия
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Успешное снятие (возвращает чек)
-          schema:
-            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse'
-        "400":
-          description: Неверный запрос, нехватка средств или счет неактивен
-          schema:
-            $ref: '#/definitions/internal_handler_http.ErrorResponse'
-        "404":
-          description: Счет не найден
-          schema:
-            $ref: '#/definitions/internal_handler_http.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/internal_handler_http.ErrorResponse'
-      summary: Снятие наличных
-      tags:
-      - transactions
   /api/cards/{card_id}:
     delete:
       description: Полностью удаляет данные карты из Card Vault и помечает её как
@@ -1002,6 +961,52 @@ paths:
               type: string
             type: object
       summary: Перевод средств
+      tags:
+      - transactions
+  /api/withdrawals:
+    post:
+      consumes:
+      - application/json
+      description: Списывает указанную сумму со счета или карты. Учитывает кредитный
+        лимит.
+      parameters:
+      - description: Ключ идемпотентности
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Данные для снятия
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное снятие
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse'
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Снятие наличных
       tags:
       - transactions
 swagger: "2.0"

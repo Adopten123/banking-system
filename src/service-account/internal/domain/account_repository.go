@@ -13,7 +13,7 @@ type AccountRepository interface {
 
 	DepositTx(ctx context.Context, params RepoDepositParams) (*DepositResult, error)
 	TransferTx(ctx context.Context, arg TransferParams) (*TransferResult, error)
-	WithdrawTx(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResult, error)
+	WithdrawTx(ctx context.Context, params RepoWithdrawParams) (*WithdrawResult, error)
 
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetAccountInternalByID(ctx context.Context, id int64) (*Account, error)

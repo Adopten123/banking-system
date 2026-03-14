@@ -6,26 +6,36 @@ import (
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
 func (s *AccountService) Withdraw(
 	ctx context.Context,
-	publicID uuid.UUID,
-	amount decimal.Decimal,
-	idempotencyKey string,
+	input domain.ServiceWithdrawInput,
 ) (*domain.WithdrawResult, error) {
-	acc, err := s.repo.GetByPublicID(ctx, publicID)
+
+	acc, sourceTypeID, sourceUUID, err := s.resolveAccount(ctx, input.SourceType, input.SourceValue)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch account info: %w", err)
+		return nil, fmt.Errorf("source resolution failed: %w", err)
 	}
 
-	if acc.StatusID != 1 {
-		return nil, domain.ErrAccountInactive
+	amount, err := decimal.NewFromString(input.AmountStr)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidAmountFormat, err)
+	}
+	if !amount.IsPositive() {
+		return nil, fmt.Errorf("withdraw amount must be positive")
 	}
 
-	result, err := s.repo.WithdrawTx(ctx, publicID, amount, idempotencyKey)
+	params := domain.RepoWithdrawParams{
+		SourceTypeID:   sourceTypeID,
+		SourceID:       sourceUUID,
+		AccountID:      acc.ID,
+		Amount:         amount,
+		IdempotencyKey: input.IdempotencyKey,
+	}
+
+	result, err := s.repo.WithdrawTx(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("withdraw transaction failed: %w", err)
 	}
@@ -34,7 +44,7 @@ func (s *AccountService) Withdraw(
 		TransactionID: result.TransactionID,
 		AccountID:     acc.ID,
 		Amount:        amount.String(),
-		Currency:      acc.CurrencyCode,
+		Currency:      result.Currency,
 		Timestamp:     time.Now().UTC(),
 	})
 	if err != nil {

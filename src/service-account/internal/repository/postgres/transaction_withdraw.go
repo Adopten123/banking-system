@@ -15,19 +15,12 @@ import (
 
 func (r *AccountRepo) WithdrawTx(
 	ctx context.Context,
-	publicID uuid.UUID,
-	amount decimal.Decimal,
-	idempotencyKey string,
+	params domain.RepoWithdrawParams,
 ) (*domain.WithdrawResult, error) {
 
 	const activeAccountStatus = 1
 	const statusCompleted = 1
-	const transactionTypeWithdraw = 3
-
-	var pgUUID pgtype.UUID
-	if err := pgUUID.Scan(publicID.String()); err != nil {
-		return nil, fmt.Errorf("invalid public_id: %w", err)
-	}
+	const transactionTypeWithdraw = 2
 
 	// Open transaction
 	tx, err := r.db.Begin(ctx)
@@ -39,7 +32,7 @@ func (r *AccountRepo) WithdrawTx(
 	qtx := r.queries.WithTx(tx)
 
 	// Block account and get actual data
-	accInfo, err := qtx.GetAccountForWithdrawUpdate(ctx, pgUUID)
+	accInfo, err := qtx.GetAccountForUpdate(ctx, params.AccountID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrAccountNotFound
@@ -53,26 +46,23 @@ func (r *AccountRepo) WithdrawTx(
 	}
 
 	// Parse balance and limit
-	balance, err := decimal.NewFromString(accInfo.AbBalance)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse balance: %w", err)
+	var balance, creditLimit decimal.Decimal
+	if val, err := accInfo.Balance.Value(); err == nil && val != nil {
+		_ = balance.Scan(val)
 	}
-	creditLimit, err := decimal.NewFromString(accInfo.AbCreditLimit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse credit limit: %w", err)
+	if val, err := accInfo.CreditLimit.Value(); err == nil && val != nil {
+		_ = creditLimit.Scan(val)
 	}
 
 	// Balance + Credit Limit >= Amount
 	availableFunds := balance.Add(creditLimit)
-	if availableFunds.LessThan(amount) {
+	if availableFunds.LessThan(params.Amount) {
 		return nil, domain.ErrInsufficientFunds
 	}
 
 	// Subtract money from balance
 	var amountNumeric pgtype.Numeric
-	if err := amountNumeric.Scan(amount.String()); err != nil {
-		return nil, fmt.Errorf("failed to scan amount: %w", err)
-	}
+	_ = amountNumeric.Scan(params.Amount.String())
 
 	err = qtx.SubtractAccountBalance(ctx, SubtractAccountBalanceParams{
 		Balance:   amountNumeric,
@@ -84,18 +74,20 @@ func (r *AccountRepo) WithdrawTx(
 
 	// Make transaction
 	txID := uuid.New()
-	var pgTxID pgtype.UUID
-	if err := pgTxID.Scan(txID.String()); err != nil {
-		return nil, fmt.Errorf("failed to scan tx uuid: %w", err)
-	}
+	pgTxID := pgtype.UUID{Bytes: txID, Valid: true}
+	var pgSourceID pgtype.UUID
+	_ = pgSourceID.Scan(params.SourceID.String())
 
 	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
-		ID:              pgTxID,
-		CategoryID:      pgtype.Int4{Int32: transactionTypeWithdraw, Valid: true},
-		StatusID:        pgtype.Int4{Int32: statusCompleted, Valid: true},
-		Description:     pgtype.Text{String: "ATM Withdrawal", Valid: true},
-		ExternalDetails: []byte("{}"),
-		IdempotencyKey:  pgtype.Text{String: idempotencyKey, Valid: true},
+		ID:                pgTxID,
+		SourceTypeID:      pgtype.Int4{Int32: params.SourceTypeID, Valid: true},
+		SourceID:          pgSourceID,
+		DestinationTypeID: pgtype.Int4{Valid: false},
+		DestinationID:     pgtype.UUID{Valid: false},
+		CategoryID:        pgtype.Int4{Int32: transactionTypeWithdraw, Valid: true},
+		StatusID:          pgtype.Int4{Int32: statusCompleted, Valid: true},
+		Description:       pgtype.Text{String: "ATM Withdrawal", Valid: true},
+		IdempotencyKey:    pgtype.Text{String: params.IdempotencyKey, Valid: true},
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -106,16 +98,12 @@ func (r *AccountRepo) WithdrawTx(
 	}
 
 	// Make posting
-	negAmount := amount.Neg()
+	negAmount := params.Amount.Neg()
 	var negAmountNumeric pgtype.Numeric
-	if err := negAmountNumeric.Scan(negAmount.String()); err != nil {
-		return nil, fmt.Errorf("failed to scan negative amount: %w", err)
-	}
+	_ = negAmountNumeric.Scan(negAmount.String())
 
 	var exchangeRate pgtype.Numeric
-	if err := exchangeRate.Scan("1.0"); err != nil {
-		return nil, fmt.Errorf("failed to scan exchange rate: %w", err)
-	}
+	_ = exchangeRate.Scan("1.0")
 
 	_, err = qtx.CreatePosting(ctx, CreatePostingParams{
 		TransactionID: pgTxID,
@@ -128,7 +116,7 @@ func (r *AccountRepo) WithdrawTx(
 		return nil, fmt.Errorf("failed to create posting record: %w", err)
 	}
 
-	newBalance := balance.Sub(amount)
+	newBalance := balance.Sub(params.Amount)
 	// Commit
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("failed to commit tx: %w", err)

@@ -663,73 +663,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/accounts/{id}/withdraw": {
-            "post": {
-                "description": "Списывает указанную сумму со счета. Учитывает кредитный лимит.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Снятие наличных",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID счета (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ключ идемпотентности (UUID)",
-                        "name": "Idempotency-Key",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Сумма для снятия",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Успешное снятие (возвращает чек)",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный запрос, нехватка средств или счет неактивен",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Счет не найден",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/cards/{card_id}": {
             "delete": {
                 "description": "Полностью удаляет данные карты из Card Vault и помечает её как удаленную в ядре.",
@@ -1175,6 +1108,74 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/withdrawals": {
+            "post": {
+                "description": "Списывает указанную сумму со счета или карты. Учитывает кредитный лимит.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Снятие наличных",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ключ идемпотентности",
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для снятия",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное снятие",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.WithdrawResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет не найден",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1451,6 +1452,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "amount": {
+                    "type": "string"
+                },
+                "source_id": {
+                    "type": "string"
+                },
+                "source_type": {
                     "type": "string"
                 }
             }

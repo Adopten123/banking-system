@@ -35,6 +35,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/deposits", h.deposit)
 		r.Post("/transfers", h.transfer)
+		r.Post("/withdrawals", h.withdraw)
 	})
 
 	r.Route("/api/accounts", func(r chi.Router) {
@@ -43,8 +44,6 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/{id}", h.getAccountInfo)
 		r.Get("/{id}/transactions", h.getTransactions)
 		r.Get("/{id}/balance", h.getAccountBalance)
-
-		r.Post("/{id}/withdraw", h.withdraw)
 
 		r.Post("/{id}/block", h.blockAccount)
 		r.Post("/{id}/freeze", h.freezeAccount)

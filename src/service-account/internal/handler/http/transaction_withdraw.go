@@ -6,32 +6,21 @@ import (
 	"net/http"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 )
 
 // @Summary      Снятие наличных
-// @Description  Списывает указанную сумму со счета. Учитывает кредитный лимит.
+// @Description  Списывает указанную сумму со счета или карты. Учитывает кредитный лимит.
 // @Tags         transactions
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string          true  "ID счета (UUID)" Format(uuid)
-// @Param 		 Idempotency-Key header string true "Ключ идемпотентности (UUID)"
-// @Param        body body      domain.WithdrawRequest true  "Сумма для снятия"
-// @Success      200  {object}  domain.WithdrawResponse "Успешное снятие (возвращает чек)"
-// @Failure      400  {object}  ErrorResponse "Неверный запрос, нехватка средств или счет неактивен"
-// @Failure      404  {object}  ErrorResponse "Счет не найден"
-// @Failure      500  {object}  ErrorResponse "Внутренняя ошибка сервера"
-// @Router       /api/accounts/{id}/withdraw [post]
+// @Param        Idempotency-Key header string true "Ключ идемпотентности"
+// @Param        body body      domain.WithdrawRequest true  "Данные для снятия"
+// @Success      200  {object}  domain.WithdrawResponse "Успешное снятие"
+// @Failure      400  {object}  map[string]string "Неверный запрос"
+// @Failure      404  {object}  map[string]string "Счет не найден"
+// @Failure      500  {object}  map[string]string "Внутренняя ошибка"
+// @Router       /api/withdrawals [post]
 func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
-	accountIDStr := chi.URLParam(r, "id")
-
-	publicID, err := uuid.Parse(accountIDStr)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
-		return
-	}
 
 	idempotencyKey := r.Header.Get("Idempotency-Key")
 	if idempotencyKey == "" {
@@ -39,38 +28,40 @@ func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode JSON
 	var req domain.WithdrawRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
 	}
 
-	// Parse and validate amount
-	amount, err := decimal.NewFromString(req.Amount)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid amount format", err)
+	if req.SourceType == "" || req.SourceID == "" {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "source_type and source_id are required", nil)
 		return
 	}
 
-	if !amount.IsPositive() {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Withdraw amount must be strictly greater than zero", nil)
-		return
+	input := domain.ServiceWithdrawInput{
+		SourceType:     req.SourceType,
+		SourceValue:    req.SourceID,
+		AmountStr:      req.Amount,
+		IdempotencyKey: idempotencyKey,
 	}
 
-	// Calling service
-	result, err := h.service.Withdraw(r.Context(), publicID, amount, idempotencyKey)
+	result, err := h.service.Withdraw(r.Context(), input)
 	if err != nil {
-		if errors.Is(err, domain.ErrAccountNotFound) {
-			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
+		if errors.Is(err, domain.ErrInvalidFormat) {
+			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid source ID format", err)
 			return
 		}
-		if errors.Is(err, domain.ErrAccountInactive) {
-			respondWithError(w, http.StatusBadRequest, "ACCOUNT_INACTIVE", "Account is blocked or inactive", err)
+		if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrCardNotFound) {
+			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Source not found", err)
+			return
+		}
+		if errors.Is(err, domain.ErrAccountInactive) || errors.Is(err, domain.ErrCardBlocked) {
+			respondWithError(w, http.StatusBadRequest, "INACTIVE", "Source is blocked or inactive", err)
 			return
 		}
 		if errors.Is(err, domain.ErrInsufficientFunds) {
-			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money on balance (including credit limit)", err)
+			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money on balance", err)
 			return
 		}
 		if errors.Is(err, domain.ErrDuplicateTransaction) {
