@@ -90,10 +90,12 @@ type RecurringPayment struct {
 }
 
 type Transaction struct {
-	ID          pgtype.UUID `json:"id"`
-	CategoryID  pgtype.Int4 `json:"category_id"`
-	StatusID    pgtype.Int4 `json:"status_id"`
-	Description pgtype.Text `json:"description"`
+	ID           pgtype.UUID `json:"id"`
+	SourceTypeID pgtype.Int4 `json:"source_type_id"`
+	SourceID     pgtype.UUID `json:"source_id"`
+	CategoryID   pgtype.Int4 `json:"category_id"`
+	StatusID     pgtype.Int4 `json:"status_id"`
+	Description  pgtype.Text `json:"description"`
 	// Данные от провайдера, device_id и т.д.
 	ExternalDetails []byte             `json:"external_details"`
 	IdempotencyKey  pgtype.Text        `json:"idempotency_key"`
@@ -106,6 +108,11 @@ type TransactionCategory struct {
 	Name pgtype.Text `json:"name"`
 	// ISO 18245
 	MccCode pgtype.Int4 `json:"mcc_code"`
+}
+
+type TransactionSourceType struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 type TransactionStatus struct {

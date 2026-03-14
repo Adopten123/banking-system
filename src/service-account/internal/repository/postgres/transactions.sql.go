@@ -69,13 +69,24 @@ func (q *Queries) CreatePosting(ctx context.Context, arg CreatePostingParams) (P
 }
 
 const createTransaction = `-- name: CreateTransaction :one
-INSERT INTO transactions (id, category_id, status_id, description, external_details, idempotency_key)
-VALUES ($1, $2, $3, $4, $5,
-        $6) RETURNING id, category_id, status_id, description, external_details, idempotency_key, created_at, updated_at
+INSERT INTO transactions (
+    id,
+    source_type_id,
+    source_id,
+    category_id,
+    status_id,
+    description,
+    external_details,
+    idempotency_key
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING id, source_type_id, source_id, category_id, status_id, description, external_details, idempotency_key, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
 	ID              pgtype.UUID `json:"id"`
+	SourceTypeID    pgtype.Int4 `json:"source_type_id"`
+	SourceID        pgtype.UUID `json:"source_id"`
 	CategoryID      pgtype.Int4 `json:"category_id"`
 	StatusID        pgtype.Int4 `json:"status_id"`
 	Description     pgtype.Text `json:"description"`
@@ -86,6 +97,8 @@ type CreateTransactionParams struct {
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
 	row := q.db.QueryRow(ctx, createTransaction,
 		arg.ID,
+		arg.SourceTypeID,
+		arg.SourceID,
 		arg.CategoryID,
 		arg.StatusID,
 		arg.Description,
@@ -95,6 +108,8 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	var i Transaction
 	err := row.Scan(
 		&i.ID,
+		&i.SourceTypeID,
+		&i.SourceID,
 		&i.CategoryID,
 		&i.StatusID,
 		&i.Description,

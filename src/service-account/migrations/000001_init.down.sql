@@ -11,4 +11,5 @@ DROP TABLE IF EXISTS "account_statuses" CASCADE;
 DROP TABLE IF EXISTS "account_types" CASCADE;
 DROP TABLE IF EXISTS "transaction_statuses" CASCADE;
 DROP TABLE IF EXISTS "transaction_categories" CASCADE;
+DROP TABLE IF EXISTS "transaction_source_types" CASCADE;
 DROP TABLE IF EXISTS "currencies" CASCADE;
