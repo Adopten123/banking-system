@@ -31,23 +31,27 @@ func (r *AccountRepo) DepositTx(
 	}
 
 	txUUID := uuid.New()
-	pgUUID := pgtype.UUID{
-		Bytes: txUUID,
-		Valid: true,
-	}
+	pgUUID := pgtype.UUID{Bytes: txUUID, Valid: true}
 
 	var rate pgtype.Numeric
 	if err := rate.Scan("1"); err != nil {
 		return nil, fmt.Errorf("failed to scan rate: %w", err)
 	}
 
+	var pgDestID pgtype.UUID
+	_ = pgDestID.Scan(params.DestinationID.String())
+
 	// Make transactions
 	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
-		ID:             pgUUID,
-		CategoryID:     pgtype.Int4{Int32: 1, Valid: true},
-		StatusID:       pgtype.Int4{Int32: 2, Valid: true},
-		Description:    pgtype.Text{String: "ATM Deposit", Valid: true},
-		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
+		ID:                pgUUID,
+		SourceTypeID:      pgtype.Int4{Valid: false},
+		SourceID:          pgtype.UUID{Valid: false},
+		DestinationTypeID: pgtype.Int4{Int32: params.DestinationTypeID, Valid: true},
+		DestinationID:     pgDestID,
+		CategoryID:        pgtype.Int4{Int32: 1, Valid: true},
+		StatusID:          pgtype.Int4{Int32: 2, Valid: true},
+		Description:       pgtype.Text{String: "Deposit", Valid: true},
+		IdempotencyKey:    pgtype.Text{String: params.IdempotencyKey, Valid: true},
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError

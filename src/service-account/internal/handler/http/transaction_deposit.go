@@ -6,70 +6,59 @@ import (
 	"net/http"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
-// @Summary      Пополнение счета
-// @Description  Зачисляет указанную сумму на счет
+// @Summary      Пополнение счета/карты
+// @Description  Зачисляет указанную сумму на счет или карту
 // @Tags         transactions
 // @Accept       json
 // @Produce      json
-// @Param        id              path      string          true "ID счета (UUID)" Format(uuid)
 // @Param        Idempotency-Key header    string          true "Ключ идемпотентности"
-// @Param        body            body      domain.DepositRequest  true "Сумма пополнения"
-// @Success      200  {object}  domain.DepositResponse "Успешное пополнение"
-// @Failure      400  {object}  ErrorResponse   "Неверный запрос или сумма"
-// @Failure      404  {object}  ErrorResponse   "Счет не найден"
-// @Failure      409  {object}  ErrorResponse   "Дубликат транзакции"
-// @Failure      500  {object}  ErrorResponse   "Внутренняя ошибка"
-// @Router       /api/accounts/{id}/deposit [post]
+// @Param        body            body      domain.DepositRequest  true "Данные пополнения"
+// @Success      201  {object}  domain.DepositResponse "Успешное пополнение"
+// @Failure      400  {object}  map[string]string   "Неверный запрос или сумма"
+// @Failure      404  {object}  map[string]string   "Счет/карта не найдены"
+// @Failure      409  {object}  map[string]string   "Дубликат транзакции"
+// @Failure      500  {object}  map[string]string   "Внутренняя ошибка"
+// @Router       /api/deposits [post]
 func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
-	// Getting UUID from url
-	accountIDParam := chi.URLParam(r, "id")
-	publicID, err := uuid.Parse(accountIDParam)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid account ID format", err)
-		return
-	}
+	// Больше не берем ID из chi.URLParam(r, "id")
 
-	// Reading idempotency-key from http-header
 	idempotencyKey := r.Header.Get("Idempotency-Key")
 	if idempotencyKey == "" {
 		respondWithError(w, http.StatusBadRequest, "MISSING_HEADER", "Idempotency-Key header is required", nil)
 		return
 	}
 
-	// Parsing request
 	var req domain.DepositRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
 	}
 
-	// Sending data into service
-	result, err := h.service.Deposit(r.Context(), publicID,
-		domain.ServiceDepositInput{
-			AmountStr:      req.Amount,
-			IdempotencyKey: idempotencyKey,
-		},
-	)
+	result, err := h.service.Deposit(r.Context(), domain.ServiceDepositInput{
+		DestinationType:  req.DestinationType,
+		DestinationValue: req.DestinationID,
+		AmountStr:        req.Amount,
+		IdempotencyKey:   idempotencyKey,
+	})
 
 	if err != nil {
-		if errors.Is(err, domain.ErrAccountNotFound) {
-			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Account not found", err)
+		// Расширенный блок ошибок, как в трансферах
+		if errors.Is(err, domain.ErrInvalidFormat) {
+			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid destination ID format", err)
 			return
 		}
-		if errors.Is(err, domain.ErrAccountInactive) {
-			respondWithError(w, http.StatusForbidden, "FORBIDDEN", "Account is not active", err)
+		if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrCardNotFound) {
+			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Destination not found", err)
 			return
 		}
-		if errors.Is(err, domain.ErrInvalidDepositAmount) {
+		if errors.Is(err, domain.ErrAccountInactive) || errors.Is(err, domain.ErrCardBlocked) {
+			respondWithError(w, http.StatusForbidden, "FORBIDDEN", "Destination is not active", err)
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidDepositAmount) || errors.Is(err, domain.ErrInvalidAmountFormat) {
 			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid deposit amount", err)
-			return
-		}
-		if errors.Is(err, domain.ErrInvalidAmountFormat) {
-			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid amount format", err)
 			return
 		}
 		if errors.Is(err, domain.ErrDuplicateTransaction) {

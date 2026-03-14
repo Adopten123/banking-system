@@ -524,79 +524,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/accounts/{id}/deposit": {
-            "post": {
-                "description": "Зачисляет указанную сумму на счет",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Пополнение счета",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID счета (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ключ идемпотентности",
-                        "name": "Idempotency-Key",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Сумма пополнения",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Успешное пополнение",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный запрос или сумма",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Счет не найден",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Дубликат транзакции",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler_http.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/accounts/{id}/freeze": {
             "post": {
                 "description": "Переводит счет в статус \"frozen\" (2). Обычно используется финмониторингом или безопасностью.",
@@ -1049,6 +976,83 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/deposits": {
+            "post": {
+                "description": "Зачисляет указанную сумму на счет или карту",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Пополнение счета/карты",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ключ идемпотентности",
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные пополнения",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Успешное пополнение",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.DepositResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос или сумма",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет/карта не найдены",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Дубликат транзакции",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/internal/payments/verify-card": {
             "post": {
                 "description": "Эндпоинт для платежного шлюза. Принимает сырые реквизиты, проверяет их криптографически через Vault и возвращает привязанный счет для списания средств. Если карта заблокирована, удалена или данные неверны — возвращает is_valid: false.",
@@ -1272,6 +1276,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "amount": {
+                    "type": "string"
+                },
+                "destination_id": {
+                    "type": "string"
+                },
+                "destination_type": {
                     "type": "string"
                 }
             }

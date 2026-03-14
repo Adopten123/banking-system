@@ -7,16 +7,20 @@ import (
 
 // ServiceDepositInput - data for Deposit (Service Layer)
 type ServiceDepositInput struct {
-	AmountStr      string
-	IdempotencyKey string
+	DestinationType  string
+	DestinationValue string
+	AmountStr        string
+	IdempotencyKey   string
 }
 
 // RepoDepositParams - data for Deposit (Service Repository)
 type RepoDepositParams struct {
-	AccountID      int64
-	AmountStr      string
-	CurrencyCode   string
-	IdempotencyKey string
+	DestinationTypeID int32
+	DestinationID     uuid.UUID
+	AccountID         int64
+	AmountStr         string
+	CurrencyCode      string
+	IdempotencyKey    string
 }
 
 // DepositResult - data info for JSON Repo - Service - Handler
@@ -27,7 +31,9 @@ type DepositResult struct {
 
 // DepositRequest - waiting sum for deposit
 type DepositRequest struct {
-	Amount string `json:"amount"`
+	DestinationType string `json:"destination_type"`
+	DestinationID   string `json:"destination_id"`
+	Amount          string `json:"amount"`
 }
 
 type DepositResponse struct {

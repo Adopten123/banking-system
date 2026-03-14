@@ -2,36 +2,23 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
 func (s *AccountService) Deposit(
 	ctx context.Context,
-	publicID uuid.UUID,
 	input domain.ServiceDepositInput,
 ) (*domain.DepositResult, error) {
-	// Getting account by id
-	acc, err := s.repo.GetByPublicID(ctx, publicID)
-	if err != nil {
-		if errors.Is(err, domain.ErrAccountNotFound) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("failed to fetch account for deposit: %w", err)
-	}
 
-	// Checking business rule:
-	// Account must be active
-	if acc.StatusID != 1 {
-		return nil, domain.ErrAccountInactive
+	acc, destinationTypeID, destinationUUID, err := s.resolveAccount(ctx, input.DestinationType, input.DestinationValue)
+	if err != nil {
+		return nil, fmt.Errorf("destination resolution failed: %w", err)
 	}
-	// Amount > 0
 	amount, err := decimal.NewFromString(input.AmountStr)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidAmountFormat, err)
@@ -40,19 +27,20 @@ func (s *AccountService) Deposit(
 		return nil, domain.ErrInvalidDepositAmount
 	}
 
-	// Calling repo layer
 	result, err := s.repo.DepositTx(ctx, domain.RepoDepositParams{
-		AccountID:      acc.ID,
-		AmountStr:      input.AmountStr,
-		CurrencyCode:   acc.CurrencyCode,
-		IdempotencyKey: input.IdempotencyKey,
+		DestinationTypeID: destinationTypeID,
+		DestinationID:     destinationUUID,
+		AccountID:         acc.ID,
+		AmountStr:         input.AmountStr,
+		CurrencyCode:      acc.CurrencyCode,
+		IdempotencyKey:    input.IdempotencyKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to process deposit in repository: %w", err)
 	}
 
 	err = s.publisher.PublishDepositCompleted(ctx, domain.DepositCompletedEvent{
-		TransactionID: uuid.New(),
+		TransactionID: result.TransactionID,
 		AccountID:     acc.ID,
 		Amount:        input.AmountStr,
 		Currency:      acc.CurrencyCode,

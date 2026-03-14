@@ -12,7 +12,7 @@ type AccountService interface {
 
 	CreateAccount(ctx context.Context, params CreateAccountInput) (*Account, error)
 
-	Deposit(ctx context.Context, publicID uuid.UUID, input ServiceDepositInput) (*DepositResult, error)
+	Deposit(ctx context.Context, input ServiceDepositInput) (*DepositResult, error)
 	Withdraw(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResult, error)
 
 	Transfer(ctx context.Context, input TransferInput) (*TransferResult, error)
