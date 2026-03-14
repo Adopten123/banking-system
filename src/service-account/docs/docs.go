@@ -736,84 +736,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/accounts/{id}/transfer": {
-            "post": {
-                "description": "Осуществляет безопасный перевод денег между двумя счетами",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "transactions"
-                ],
-                "summary": "Перевод средств",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Public ID счета отправителя (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Уникальный ключ запроса",
-                        "name": "Idempotency-Key",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Данные для перевода",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Успешный перевод",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный запрос",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Счет не найден",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/accounts/{id}/withdraw": {
             "post": {
                 "description": "Списывает указанную сумму со счета. Учитывает кредитный лимит.",
@@ -1172,6 +1094,83 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/transfers": {
+            "post": {
+                "description": "Осуществляет безопасный перевод денег. Источником и получателем могут выступать счет (account) или карта (card).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Перевод средств",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Уникальный ключ запроса",
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для перевода",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный перевод",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Счет или карта не найдены",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Дубликат транзакции",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1365,7 +1364,27 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "to_account_id": {
+                "destination_id": {
+                    "type": "string"
+                },
+                "destination_type": {
+                    "type": "string"
+                },
+                "source_id": {
+                    "type": "string"
+                },
+                "source_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.TransferResponse": {
+            "type": "object",
+            "properties": {
+                "sender_new_balance": {
+                    "type": "number"
+                },
+                "transaction_id": {
                     "type": "string"
                 }
             }

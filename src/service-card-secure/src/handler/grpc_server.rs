@@ -146,4 +146,21 @@ impl CardVaultService for CardVaultGrpcServer {
 
         Ok(Response::new(VerifyPinResponse { is_valid }))
     }
+
+    async fn get_token_by_pan(
+        &self,
+        request: Request<GetTokenByPanRequest>,
+    ) -> Result<Response<GetTokenByPanResponse>, Status> {
+        let req = request.into_inner();
+
+        // Вызываем нашу новую бизнес-логику
+        let token_id = self.use_case
+            .get_token_by_pan(&req.pan)
+            .await
+            .map_err(Self::map_error)?;
+
+        Ok(Response::new(GetTokenByPanResponse {
+            token_id: token_id.to_string(),
+        }))
+    }
 }

@@ -125,7 +125,20 @@ definitions:
         type: string
       description:
         type: string
-      to_account_id:
+      destination_id:
+        type: string
+      destination_type:
+        type: string
+      source_id:
+        type: string
+      source_type:
+        type: string
+    type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.TransferResponse:
+    properties:
+      sender_new_balance:
+        type: number
+      transaction_id:
         type: string
     type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.UpdateCardStatusRequest:
@@ -686,58 +699,6 @@ paths:
       summary: Получить историю транзакций
       tags:
       - transactions
-  /api/accounts/{id}/transfer:
-    post:
-      consumes:
-      - application/json
-      description: Осуществляет безопасный перевод денег между двумя счетами
-      parameters:
-      - description: Public ID счета отправителя (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Уникальный ключ запроса
-        in: header
-        name: Idempotency-Key
-        required: true
-        type: string
-      - description: Данные для перевода
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Успешный перевод
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Неверный запрос
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Счет не найден
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Внутренняя ошибка
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Перевод средств
-      tags:
-      - transactions
   /api/accounts/{id}/withdraw:
     post:
       consumes:
@@ -985,4 +946,56 @@ paths:
       summary: Проверить реквизиты карты (Внутреннее API)
       tags:
       - Internal
+  /api/transfers:
+    post:
+      consumes:
+      - application/json
+      description: Осуществляет безопасный перевод денег. Источником и получателем
+        могут выступать счет (account) или карта (card).
+      parameters:
+      - description: Уникальный ключ запроса
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Данные для перевода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный перевод
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.TransferResponse'
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Счет или карта не найдены
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Дубликат транзакции
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Перевод средств
+      tags:
+      - transactions
 swagger: "2.0"

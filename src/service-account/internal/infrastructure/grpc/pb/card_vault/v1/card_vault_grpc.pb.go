@@ -22,6 +22,7 @@ const (
 	CardVaultService_IssueCard_FullMethodName        = "/card_vault.v1.CardVaultService/IssueCard"
 	CardVaultService_GetCardDetails_FullMethodName   = "/card_vault.v1.CardVaultService/GetCardDetails"
 	CardVaultService_VerifyCard_FullMethodName       = "/card_vault.v1.CardVaultService/VerifyCard"
+	CardVaultService_GetTokenByPan_FullMethodName    = "/card_vault.v1.CardVaultService/GetTokenByPan"
 	CardVaultService_UpdateCardStatus_FullMethodName = "/card_vault.v1.CardVaultService/UpdateCardStatus"
 	CardVaultService_DeleteCardData_FullMethodName   = "/card_vault.v1.CardVaultService/DeleteCardData"
 	CardVaultService_SetPin_FullMethodName           = "/card_vault.v1.CardVaultService/SetPin"
@@ -35,6 +36,7 @@ type CardVaultServiceClient interface {
 	IssueCard(ctx context.Context, in *IssueCardRequest, opts ...grpc.CallOption) (*IssueCardResponse, error)
 	GetCardDetails(ctx context.Context, in *GetCardDetailsRequest, opts ...grpc.CallOption) (*GetCardDetailsResponse, error)
 	VerifyCard(ctx context.Context, in *VerifyCardRequest, opts ...grpc.CallOption) (*VerifyCardResponse, error)
+	GetTokenByPan(ctx context.Context, in *GetTokenByPanRequest, opts ...grpc.CallOption) (*GetTokenByPanResponse, error)
 	UpdateCardStatus(ctx context.Context, in *UpdateCardStatusRequest, opts ...grpc.CallOption) (*UpdateCardStatusResponse, error)
 	DeleteCardData(ctx context.Context, in *DeleteCardDataRequest, opts ...grpc.CallOption) (*DeleteCardDataResponse, error)
 	SetPin(ctx context.Context, in *SetPinRequest, opts ...grpc.CallOption) (*SetPinResponse, error)
@@ -73,6 +75,16 @@ func (c *cardVaultServiceClient) VerifyCard(ctx context.Context, in *VerifyCardR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VerifyCardResponse)
 	err := c.cc.Invoke(ctx, CardVaultService_VerifyCard_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cardVaultServiceClient) GetTokenByPan(ctx context.Context, in *GetTokenByPanRequest, opts ...grpc.CallOption) (*GetTokenByPanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTokenByPanResponse)
+	err := c.cc.Invoke(ctx, CardVaultService_GetTokenByPan_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +138,7 @@ type CardVaultServiceServer interface {
 	IssueCard(context.Context, *IssueCardRequest) (*IssueCardResponse, error)
 	GetCardDetails(context.Context, *GetCardDetailsRequest) (*GetCardDetailsResponse, error)
 	VerifyCard(context.Context, *VerifyCardRequest) (*VerifyCardResponse, error)
+	GetTokenByPan(context.Context, *GetTokenByPanRequest) (*GetTokenByPanResponse, error)
 	UpdateCardStatus(context.Context, *UpdateCardStatusRequest) (*UpdateCardStatusResponse, error)
 	DeleteCardData(context.Context, *DeleteCardDataRequest) (*DeleteCardDataResponse, error)
 	SetPin(context.Context, *SetPinRequest) (*SetPinResponse, error)
@@ -148,6 +161,9 @@ func (UnimplementedCardVaultServiceServer) GetCardDetails(context.Context, *GetC
 }
 func (UnimplementedCardVaultServiceServer) VerifyCard(context.Context, *VerifyCardRequest) (*VerifyCardResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyCard not implemented")
+}
+func (UnimplementedCardVaultServiceServer) GetTokenByPan(context.Context, *GetTokenByPanRequest) (*GetTokenByPanResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTokenByPan not implemented")
 }
 func (UnimplementedCardVaultServiceServer) UpdateCardStatus(context.Context, *UpdateCardStatusRequest) (*UpdateCardStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateCardStatus not implemented")
@@ -232,6 +248,24 @@ func _CardVaultService_VerifyCard_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CardVaultServiceServer).VerifyCard(ctx, req.(*VerifyCardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CardVaultService_GetTokenByPan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTokenByPanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardVaultServiceServer).GetTokenByPan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardVaultService_GetTokenByPan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardVaultServiceServer).GetTokenByPan(ctx, req.(*GetTokenByPanRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -326,6 +360,10 @@ var CardVaultService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyCard",
 			Handler:    _CardVaultService_VerifyCard_Handler,
+		},
+		{
+			MethodName: "GetTokenByPan",
+			Handler:    _CardVaultService_GetTokenByPan_Handler,
 		},
 		{
 			MethodName: "UpdateCardStatus",

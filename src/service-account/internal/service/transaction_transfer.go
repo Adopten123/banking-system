@@ -15,12 +15,12 @@ func (s *AccountService) Transfer(
 	input domain.TransferInput,
 ) (*domain.TransferResult, error) {
 
-	fromAcc, sourceTypeID, err := s.resolveAccount(ctx, input.SourceType, input.SourceID)
+	fromAcc, sourceTypeID, sourceUUID, err := s.resolveAccount(ctx, input.SourceType, input.SourceID)
 	if err != nil {
 		return nil, fmt.Errorf("sender resolution failed: %w", err)
 	}
 
-	toAcc, destinationTypeID, err := s.resolveAccount(ctx, input.DestinationType, input.DestinationID)
+	toAcc, destinationTypeID, destinationUUID, err := s.resolveAccount(ctx, input.DestinationType, input.DestinationID)
 	if err != nil {
 		return nil, fmt.Errorf("receiver resolution failed: %w", err)
 	}
@@ -43,9 +43,9 @@ func (s *AccountService) Transfer(
 
 	params := domain.TransferParams{
 		SourceTypeID:      sourceTypeID,
-		SourceID:          input.SourceID,
+		SourceID:          sourceUUID,
 		DestinationTypeID: destinationTypeID,
-		DestinationID:     input.DestinationID,
+		DestinationID:     destinationUUID,
 		FromAccountID:     fromAcc.ID,
 		ToAccountID:       toAcc.ID,
 		SenderAmountStr:   transferAmount.String(),
@@ -91,34 +91,46 @@ func (s *AccountService) Transfer(
 func (s *AccountService) resolveAccount(
 	ctx context.Context,
 	entityType string,
-	entityID uuid.UUID,
-) (*domain.Account, int32, error) {
+	entityValue string,
+) (*domain.Account, int32, uuid.UUID, error) {
 
 	switch entityType {
 	case "account":
-		acc, err := s.repo.GetByPublicID(ctx, entityID)
+		accUUID, err := uuid.Parse(entityValue)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, uuid.Nil, fmt.Errorf("invalid account public_id format: %w", err)
 		}
-		return acc, domain.SourceTypeIDAccount, nil
+
+		acc, err := s.repo.GetByPublicID(ctx, accUUID)
+		if err != nil {
+			return nil, 0, uuid.Nil, err
+		}
+		return acc, domain.SourceTypeIDAccount, accUUID, nil
 
 	case "card":
-		card, err := s.repo.GetCardByID(ctx, entityID)
+		cardTokenStr, err := s.vault.GetTokenByPan(ctx, entityValue)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, uuid.Nil, fmt.Errorf("card not found in vault: %w", err)
 		}
-
+		cardUUID, err := uuid.Parse(cardTokenStr)
+		if err != nil {
+			return nil, 0, uuid.Nil, fmt.Errorf("vault returned invalid token: %w", err)
+		}
+		card, err := s.repo.GetCardByID(ctx, cardUUID)
+		if err != nil {
+			return nil, 0, uuid.Nil, err
+		}
 		if card.Status != "active" {
-			return nil, 0, domain.ErrCardBlocked
+			return nil, 0, uuid.Nil, domain.ErrCardBlocked
 		}
-
 		acc, err := s.repo.GetAccountInternalByID(ctx, card.AccountID)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed to get account for card: %w", err)
+			return nil, 0, uuid.Nil, fmt.Errorf("failed to get account for card: %w", err)
 		}
-		return acc, domain.SourceTypeIDCard, nil
+
+		return acc, domain.SourceTypeIDCard, cardUUID, nil
 
 	default:
-		return nil, 0, fmt.Errorf("unsupported entity type: %s", entityType)
+		return nil, 0, uuid.Nil, fmt.Errorf("unsupported entity type: %s", entityType)
 	}
 }

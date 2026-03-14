@@ -6,69 +6,46 @@ import (
 	"net/http"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 )
 
 // @Summary Перевод средств
-// @Description Осуществляет безопасный перевод денег между двумя счетами
-// @Tags 		transactions
-// @Accept 		json
-// @Produce 	json
-// @Param 		id path string true "Public ID счета отправителя (UUID)"
-// @Param 		Idempotency-Key header string true "Уникальный ключ запроса"
-// @Param 		request body domain.TransferRequest true "Данные для перевода"
-// @Success 	200 {object} map[string]string "Успешный перевод"
-// @Failure 	400 {object} map[string]string "Неверный запрос"
-// @Failure 	404 {object} map[string]string "Счет не найден"
-// @Failure 	500 {object} map[string]string "Внутренняя ошибка"
-// @Router /api/accounts/{id}/transfer [post]
+// @Description Осуществляет безопасный перевод денег. Источником и получателем могут выступать счет (account) или карта (card).
+// @Tags       transactions
+// @Accept     json
+// @Produce    json
+// @Param      Idempotency-Key header string true "Уникальный ключ запроса"
+// @Param      request body domain.TransferRequest true "Данные для перевода"
+// @Success    200 {object} domain.TransferResponse "Успешный перевод"
+// @Failure    400 {object} map[string]string "Неверный запрос"
+// @Failure    404 {object} map[string]string "Счет или карта не найдены"
+// @Failure    409 {object} map[string]string "Дубликат транзакции"
+// @Failure    500 {object} map[string]string "Внутренняя ошибка"
+// @Router /api/transfers [post]
 func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
-	fromAccID := chi.URLParam(r, "id")
-	fromPublicID, err := uuid.Parse(fromAccID)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid sender account ID", err)
-		return
-	}
 
 	idempotencyKey := r.Header.Get("Idempotency-Key")
 	if idempotencyKey == "" {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Idempotency-Key header is required", nil)
 		return
 	}
+
 	var req domain.TransferRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", err)
 		return
 	}
 
-	toPublicID, err := uuid.Parse(req.ToAccountID)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid receiver account ID", err)
-		return
-	}
-
-	if fromPublicID == toPublicID {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Cannot transfer to the same account", nil)
-		return
-	}
-
-	amount, err := decimal.NewFromString(req.Amount)
-	if err != nil || !amount.IsPositive() {
-		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Amount must be a positive number", nil)
-		return
-	}
-
 	result, err := h.service.Transfer(
 		r.Context(),
 		domain.TransferInput{
-			FromPublicID:   fromPublicID,
-			ToPublicID:     toPublicID,
-			Amount:         req.Amount,
-			Currency:       req.CurrencyCode,
-			IdempotencyKey: idempotencyKey,
-			Description:    req.Description,
+			SourceType:      req.SourceType,
+			SourceID:        req.SourceID,
+			DestinationType: req.DestinationType,
+			DestinationID:   req.DestinationID,
+			Amount:          req.Amount,
+			Currency:        req.CurrencyCode,
+			IdempotencyKey:  idempotencyKey,
+			Description:     req.Description,
 		},
 	)
 
@@ -77,12 +54,14 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "INSUFFICIENT_FUNDS", "Not enough money to complete the transfer", err)
 			return
 		}
-		if errors.Is(err, domain.ErrAccountInactive) {
-			respondWithError(w, http.StatusBadRequest, "ACCOUNT_INACTIVE", "Account is blocked or inactive", err)
+
+		if errors.Is(err, domain.ErrAccountInactive) || errors.Is(err, domain.ErrCardBlocked) {
+			respondWithError(w, http.StatusBadRequest, "INACTIVE", "Source or destination is blocked or inactive", err)
 			return
 		}
-		if errors.Is(err, domain.ErrAccountNotFound) {
-			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Sender or receiver account not found", err)
+
+		if errors.Is(err, domain.ErrAccountNotFound) || errors.Is(err, domain.ErrCardNotFound) {
+			respondWithError(w, http.StatusNotFound, "NOT_FOUND", "Source or destination not found", err)
 			return
 		}
 		if errors.Is(err, domain.ErrDuplicateTransaction) {
@@ -92,8 +71,8 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Transfer failed", err)
 		return
-
 	}
+
 	resp := domain.TransferResponse{
 		TransactionID: result.TransactionID,
 		NewBalance:    result.SenderNewBalance,

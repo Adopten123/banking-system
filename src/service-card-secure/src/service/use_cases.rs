@@ -159,4 +159,17 @@ impl CardVaultUseCase {
             None => Ok(false),
         }
     }
+
+    pub async fn get_token_by_pan(&self, pan: &str) -> Result<Uuid, VaultError> {
+        let pan_hash = self.crypto.hash_pan(pan)?;
+
+        let card = self.repo.find_by_pan_hash(&pan_hash).await?
+            .ok_or(VaultError::CardNotFound)?;
+
+        if card.status == CardStatus::Blocked {
+            return Err(VaultError::CardBlocked);
+        }
+
+        Ok(card.token_id)
+    }
 }

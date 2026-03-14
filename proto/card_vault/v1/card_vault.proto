@@ -13,6 +13,8 @@ service CardVaultService {
 
   rpc VerifyCard(VerifyCardRequest) returns (VerifyCardResponse);
 
+  rpc GetTokenByPan(GetTokenByPanRequest) returns (GetTokenByPanResponse);
+
   // --- SECURITY AND  COMPLIANCE ---
 
   rpc UpdateCardStatus(UpdateCardStatusRequest) returns (UpdateCardStatusResponse);
@@ -94,4 +96,12 @@ message VerifyPinRequest {
 
 message VerifyPinResponse {
   bool is_valid = 1;
+}
+
+message GetTokenByPanRequest {
+  string pan = 1;
+}
+
+message GetTokenByPanResponse {
+  string token_id = 1;
 }

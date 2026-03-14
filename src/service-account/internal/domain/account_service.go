@@ -16,7 +16,6 @@ type AccountService interface {
 	Withdraw(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResult, error)
 
 	Transfer(ctx context.Context, input TransferInput) (*TransferResult, error)
-	resolveAccount(ctx context.Context, entityType string, entityID uuid.UUID) (*Account, int32, error)
 
 	GetAccount(ctx context.Context, publicID uuid.UUID) (*Account, error)
 	GetAccountBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)

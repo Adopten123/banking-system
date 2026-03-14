@@ -749,6 +749,94 @@ func (x *VerifyPinResponse) GetIsValid() bool {
 	return false
 }
 
+type GetTokenByPanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pan           string                 `protobuf:"bytes,1,opt,name=pan,proto3" json:"pan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTokenByPanRequest) Reset() {
+	*x = GetTokenByPanRequest{}
+	mi := &file_card_vault_v1_card_vault_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTokenByPanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTokenByPanRequest) ProtoMessage() {}
+
+func (x *GetTokenByPanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_card_vault_v1_card_vault_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTokenByPanRequest.ProtoReflect.Descriptor instead.
+func (*GetTokenByPanRequest) Descriptor() ([]byte, []int) {
+	return file_card_vault_v1_card_vault_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetTokenByPanRequest) GetPan() string {
+	if x != nil {
+		return x.Pan
+	}
+	return ""
+}
+
+type GetTokenByPanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TokenId       string                 `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTokenByPanResponse) Reset() {
+	*x = GetTokenByPanResponse{}
+	mi := &file_card_vault_v1_card_vault_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTokenByPanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTokenByPanResponse) ProtoMessage() {}
+
+func (x *GetTokenByPanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_card_vault_v1_card_vault_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTokenByPanResponse.ProtoReflect.Descriptor instead.
+func (*GetTokenByPanResponse) Descriptor() ([]byte, []int) {
+	return file_card_vault_v1_card_vault_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetTokenByPanResponse) GetTokenId() string {
+	if x != nil {
+		return x.TokenId
+	}
+	return ""
+}
+
 var File_card_vault_v1_card_vault_proto protoreflect.FileDescriptor
 
 const file_card_vault_v1_card_vault_proto_rawDesc = "" +
@@ -799,12 +887,17 @@ const file_card_vault_v1_card_vault_proto_rawDesc = "" +
 	"\btoken_id\x18\x01 \x01(\tR\atokenId\x12\x10\n" +
 	"\x03pin\x18\x02 \x01(\tR\x03pin\".\n" +
 	"\x11VerifyPinResponse\x12\x19\n" +
-	"\bis_valid\x18\x01 \x01(\bR\aisValid2\xef\x04\n" +
+	"\bis_valid\x18\x01 \x01(\bR\aisValid\"(\n" +
+	"\x14GetTokenByPanRequest\x12\x10\n" +
+	"\x03pan\x18\x01 \x01(\tR\x03pan\"2\n" +
+	"\x15GetTokenByPanResponse\x12\x19\n" +
+	"\btoken_id\x18\x01 \x01(\tR\atokenId2\xcb\x05\n" +
 	"\x10CardVaultService\x12N\n" +
 	"\tIssueCard\x12\x1f.card_vault.v1.IssueCardRequest\x1a .card_vault.v1.IssueCardResponse\x12]\n" +
 	"\x0eGetCardDetails\x12$.card_vault.v1.GetCardDetailsRequest\x1a%.card_vault.v1.GetCardDetailsResponse\x12Q\n" +
 	"\n" +
-	"VerifyCard\x12 .card_vault.v1.VerifyCardRequest\x1a!.card_vault.v1.VerifyCardResponse\x12c\n" +
+	"VerifyCard\x12 .card_vault.v1.VerifyCardRequest\x1a!.card_vault.v1.VerifyCardResponse\x12Z\n" +
+	"\rGetTokenByPan\x12#.card_vault.v1.GetTokenByPanRequest\x1a$.card_vault.v1.GetTokenByPanResponse\x12c\n" +
 	"\x10UpdateCardStatus\x12&.card_vault.v1.UpdateCardStatusRequest\x1a'.card_vault.v1.UpdateCardStatusResponse\x12]\n" +
 	"\x0eDeleteCardData\x12$.card_vault.v1.DeleteCardDataRequest\x1a%.card_vault.v1.DeleteCardDataResponse\x12E\n" +
 	"\x06SetPin\x12\x1c.card_vault.v1.SetPinRequest\x1a\x1d.card_vault.v1.SetPinResponse\x12N\n" +
@@ -822,7 +915,7 @@ func file_card_vault_v1_card_vault_proto_rawDescGZIP() []byte {
 	return file_card_vault_v1_card_vault_proto_rawDescData
 }
 
-var file_card_vault_v1_card_vault_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_card_vault_v1_card_vault_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_card_vault_v1_card_vault_proto_goTypes = []any{
 	(*IssueCardRequest)(nil),         // 0: card_vault.v1.IssueCardRequest
 	(*IssueCardResponse)(nil),        // 1: card_vault.v1.IssueCardResponse
@@ -838,24 +931,28 @@ var file_card_vault_v1_card_vault_proto_goTypes = []any{
 	(*SetPinResponse)(nil),           // 11: card_vault.v1.SetPinResponse
 	(*VerifyPinRequest)(nil),         // 12: card_vault.v1.VerifyPinRequest
 	(*VerifyPinResponse)(nil),        // 13: card_vault.v1.VerifyPinResponse
+	(*GetTokenByPanRequest)(nil),     // 14: card_vault.v1.GetTokenByPanRequest
+	(*GetTokenByPanResponse)(nil),    // 15: card_vault.v1.GetTokenByPanResponse
 }
 var file_card_vault_v1_card_vault_proto_depIdxs = []int32{
 	0,  // 0: card_vault.v1.CardVaultService.IssueCard:input_type -> card_vault.v1.IssueCardRequest
 	2,  // 1: card_vault.v1.CardVaultService.GetCardDetails:input_type -> card_vault.v1.GetCardDetailsRequest
 	4,  // 2: card_vault.v1.CardVaultService.VerifyCard:input_type -> card_vault.v1.VerifyCardRequest
-	6,  // 3: card_vault.v1.CardVaultService.UpdateCardStatus:input_type -> card_vault.v1.UpdateCardStatusRequest
-	8,  // 4: card_vault.v1.CardVaultService.DeleteCardData:input_type -> card_vault.v1.DeleteCardDataRequest
-	10, // 5: card_vault.v1.CardVaultService.SetPin:input_type -> card_vault.v1.SetPinRequest
-	12, // 6: card_vault.v1.CardVaultService.VerifyPin:input_type -> card_vault.v1.VerifyPinRequest
-	1,  // 7: card_vault.v1.CardVaultService.IssueCard:output_type -> card_vault.v1.IssueCardResponse
-	3,  // 8: card_vault.v1.CardVaultService.GetCardDetails:output_type -> card_vault.v1.GetCardDetailsResponse
-	5,  // 9: card_vault.v1.CardVaultService.VerifyCard:output_type -> card_vault.v1.VerifyCardResponse
-	7,  // 10: card_vault.v1.CardVaultService.UpdateCardStatus:output_type -> card_vault.v1.UpdateCardStatusResponse
-	9,  // 11: card_vault.v1.CardVaultService.DeleteCardData:output_type -> card_vault.v1.DeleteCardDataResponse
-	11, // 12: card_vault.v1.CardVaultService.SetPin:output_type -> card_vault.v1.SetPinResponse
-	13, // 13: card_vault.v1.CardVaultService.VerifyPin:output_type -> card_vault.v1.VerifyPinResponse
-	7,  // [7:14] is the sub-list for method output_type
-	0,  // [0:7] is the sub-list for method input_type
+	14, // 3: card_vault.v1.CardVaultService.GetTokenByPan:input_type -> card_vault.v1.GetTokenByPanRequest
+	6,  // 4: card_vault.v1.CardVaultService.UpdateCardStatus:input_type -> card_vault.v1.UpdateCardStatusRequest
+	8,  // 5: card_vault.v1.CardVaultService.DeleteCardData:input_type -> card_vault.v1.DeleteCardDataRequest
+	10, // 6: card_vault.v1.CardVaultService.SetPin:input_type -> card_vault.v1.SetPinRequest
+	12, // 7: card_vault.v1.CardVaultService.VerifyPin:input_type -> card_vault.v1.VerifyPinRequest
+	1,  // 8: card_vault.v1.CardVaultService.IssueCard:output_type -> card_vault.v1.IssueCardResponse
+	3,  // 9: card_vault.v1.CardVaultService.GetCardDetails:output_type -> card_vault.v1.GetCardDetailsResponse
+	5,  // 10: card_vault.v1.CardVaultService.VerifyCard:output_type -> card_vault.v1.VerifyCardResponse
+	15, // 11: card_vault.v1.CardVaultService.GetTokenByPan:output_type -> card_vault.v1.GetTokenByPanResponse
+	7,  // 12: card_vault.v1.CardVaultService.UpdateCardStatus:output_type -> card_vault.v1.UpdateCardStatusResponse
+	9,  // 13: card_vault.v1.CardVaultService.DeleteCardData:output_type -> card_vault.v1.DeleteCardDataResponse
+	11, // 14: card_vault.v1.CardVaultService.SetPin:output_type -> card_vault.v1.SetPinResponse
+	13, // 15: card_vault.v1.CardVaultService.VerifyPin:output_type -> card_vault.v1.VerifyPinResponse
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -872,7 +969,7 @@ func file_card_vault_v1_card_vault_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_card_vault_v1_card_vault_proto_rawDesc), len(file_card_vault_v1_card_vault_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

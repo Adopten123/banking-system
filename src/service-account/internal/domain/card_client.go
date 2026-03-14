@@ -13,4 +13,5 @@ type CardVaultClient interface {
 
 	SetPin(ctx context.Context, tokenID string, pin string) error
 	VerifyPin(ctx context.Context, tokenID string, pin string) (bool, error)
+	GetTokenByPan(ctx context.Context, pan string) (string, error)
 }

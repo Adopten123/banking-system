@@ -34,10 +34,10 @@ type TransferParams struct {
 // TransferInput - data for transfers
 type TransferInput struct {
 	SourceType string
-	SourceID   uuid.UUID
+	SourceID   string
 
 	DestinationType string
-	DestinationID   uuid.UUID
+	DestinationID   string
 
 	Amount         string
 	Currency       string
