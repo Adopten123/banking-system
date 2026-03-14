@@ -19,12 +19,17 @@ func NewNotificationService() *NotificationService {
 }
 
 func (s *NotificationService) registerHandlers() {
-	s.handlers["TransferCreatedEvent"] = s.handleTransferCreated
+	// Account events
 	s.handlers["AccountCreatedEvent"] = s.handleAccountCreated
 	s.handlers["AccountStatusChangedEvent"] = s.handleAccountStatusChanged
+	s.handlers["CreditLimitChangedEvent"] = s.handleCreditLimitChanged
+
+	s.handlers["TransferCreatedEvent"] = s.handleTransferCreated
 	s.handlers["DepositCompletedEvent"] = s.handleDepositCompleted
 	s.handlers["WithdrawalCompletedEvent"] = s.handleWithdrawalCompleted
-	s.handlers["CreditLimitChangedEvent"] = s.handleCreditLimitChanged
+
+	s.handlers["CardIssuedEvent"] = s.handleCardIssued
+	s.handlers["CardStatusChangedEvent"] = s.handleCardStatusChanged
 }
 
 // HandleMessage - calls the required handler
