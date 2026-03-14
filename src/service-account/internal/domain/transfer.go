@@ -5,22 +5,40 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const (
+	SourceTypeIDAccount int32 = 1
+	SourceTypeIDCard    int32 = 2
+)
+
 type TransferParams struct {
-	FromAccountID     int64
-	ToAccountID       int64
+	SourceTypeID int32
+	SourceID     uuid.UUID
+
+	DestinationTypeID int32
+	DestinationID     uuid.UUID
+
+	FromAccountID int64
+	ToAccountID   int64
+
 	SenderAmountStr   string
 	ReceiverAmountStr string
-	ExchangeRateStr   string
-	CurrencyCode      string
-	ReceiverCurrency  string
-	IdempotencyKey    string
-	Description       string
+
+	ExchangeRateStr  string
+	CurrencyCode     string
+	ReceiverCurrency string
+
+	IdempotencyKey string
+	Description    string
 }
 
 // TransferInput - data for transfers
 type TransferInput struct {
-	FromPublicID   uuid.UUID
-	ToPublicID     uuid.UUID
+	SourceType string
+	SourceID   uuid.UUID
+
+	DestinationType string
+	DestinationID   uuid.UUID
+
 	Amount         string
 	Currency       string
 	IdempotencyKey string
@@ -28,10 +46,15 @@ type TransferInput struct {
 }
 
 type TransferRequest struct {
-	ToAccountID  string `json:"to_account_id"`
-	Amount       string `json:"amount"`
-	CurrencyCode string `json:"currency_code"`
-	Description  string `json:"description"`
+	SourceType      string `json:"source_type"`
+	SourceID        string `json:"source_id"`
+
+	DestinationType string `json:"destination_type"`
+	DestinationID   string `json:"destination_id"`
+
+	Amount          string `json:"amount"`
+	CurrencyCode    string `json:"currency_code"`
+	Description     string `json:"description"`
 }
 
 type TransferResponse struct {

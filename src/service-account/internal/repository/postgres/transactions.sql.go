@@ -73,25 +73,31 @@ INSERT INTO transactions (
     id,
     source_type_id,
     source_id,
+    destination_type_id,
+    destination_id,
     category_id,
     status_id,
     description,
     external_details,
     idempotency_key
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING id, source_type_id, source_id, category_id, status_id, description, external_details, idempotency_key, created_at, updated_at
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING id, source_type_id, source_id, destination_type_id,
+    destination_id, category_id, status_id, description, external_details,
+    idempotency_key, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
-	ID              pgtype.UUID `json:"id"`
-	SourceTypeID    pgtype.Int4 `json:"source_type_id"`
-	SourceID        pgtype.UUID `json:"source_id"`
-	CategoryID      pgtype.Int4 `json:"category_id"`
-	StatusID        pgtype.Int4 `json:"status_id"`
-	Description     pgtype.Text `json:"description"`
-	ExternalDetails []byte      `json:"external_details"`
-	IdempotencyKey  pgtype.Text `json:"idempotency_key"`
+	ID                pgtype.UUID `json:"id"`
+	SourceTypeID      pgtype.Int4 `json:"source_type_id"`
+	SourceID          pgtype.UUID `json:"source_id"`
+	DestinationTypeID pgtype.Int4 `json:"destination_type_id"`
+	DestinationID     pgtype.UUID `json:"destination_id"`
+	CategoryID        pgtype.Int4 `json:"category_id"`
+	StatusID          pgtype.Int4 `json:"status_id"`
+	Description       pgtype.Text `json:"description"`
+	ExternalDetails   []byte      `json:"external_details"`
+	IdempotencyKey    pgtype.Text `json:"idempotency_key"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
@@ -99,6 +105,8 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.ID,
 		arg.SourceTypeID,
 		arg.SourceID,
+		arg.DestinationTypeID,
+		arg.DestinationID,
 		arg.CategoryID,
 		arg.StatusID,
 		arg.Description,
@@ -110,6 +118,8 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.ID,
 		&i.SourceTypeID,
 		&i.SourceID,
+		&i.DestinationTypeID,
+		&i.DestinationID,
 		&i.CategoryID,
 		&i.StatusID,
 		&i.Description,

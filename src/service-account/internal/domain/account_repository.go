@@ -16,6 +16,7 @@ type AccountRepository interface {
 	WithdrawTx(ctx context.Context, publicID uuid.UUID, amount decimal.Decimal, idempotencyKey string) (*WithdrawResult, error)
 
 	GetByPublicID(ctx context.Context, publicID uuid.UUID) (*Account, error)
+	GetAccountInternalByID(ctx context.Context, id int64) (*Account, error)
 	GetBalance(ctx context.Context, publicID uuid.UUID) (decimal.Decimal, error)
 	GetTransactions(ctx context.Context, accountID int64, filter TransactionFilter) (*TransactionHistoryResult, error)
 

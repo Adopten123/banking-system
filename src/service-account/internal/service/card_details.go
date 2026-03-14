@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetCardDetails возвращает сырые реквизиты карты, запрашивая их у Vault
+// GetCardDetails returns raw card details from Vault
 func (s *AccountService) GetCardDetails(ctx context.Context, cardID uuid.UUID) (*domain.CardDetails, error) {
 	// 1. Try to find card in account_db (Go)
 	card, err := s.repo.GetCardByID(ctx, cardID)

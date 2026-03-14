@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
@@ -14,14 +15,14 @@ func (s *AccountService) Transfer(
 	input domain.TransferInput,
 ) (*domain.TransferResult, error) {
 
-	fromAcc, err := s.repo.GetByPublicID(ctx, input.FromPublicID)
+	fromAcc, sourceTypeID, err := s.resolveAccount(ctx, input.SourceType, input.SourceID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sender resolution failed: %w", err)
 	}
 
-	toAcc, err := s.repo.GetByPublicID(ctx, input.ToPublicID)
+	toAcc, destinationTypeID, err := s.resolveAccount(ctx, input.DestinationType, input.DestinationID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("receiver resolution failed: %w", err)
 	}
 
 	transferAmount, err := decimal.NewFromString(input.Amount)
@@ -41,6 +42,10 @@ func (s *AccountService) Transfer(
 	}
 
 	params := domain.TransferParams{
+		SourceTypeID:      sourceTypeID,
+		SourceID:          input.SourceID,
+		DestinationTypeID: destinationTypeID,
+		DestinationID:     input.DestinationID,
 		FromAccountID:     fromAcc.ID,
 		ToAccountID:       toAcc.ID,
 		SenderAmountStr:   transferAmount.String(),
@@ -58,20 +63,20 @@ func (s *AccountService) Transfer(
 	}
 
 	event := domain.TransferCreatedEvent{
-		TransactionID:    result.TransactionID,
-		FromAccountID:    fromAcc.ID,
-		ToAccountID:      toAcc.ID,
+		TransactionID: result.TransactionID,
+		FromAccountID: fromAcc.ID,
+		ToAccountID:   toAcc.ID,
 
-		SenderAmount:     transferAmount.String(),
-		SenderCurrency:   fromAcc.CurrencyCode,
+		SenderAmount:   transferAmount.String(),
+		SenderCurrency: fromAcc.CurrencyCode,
 
 		ReceiverAmount:   receiverAmount.String(),
 		ReceiverCurrency: toAcc.CurrencyCode,
 
-		ExchangeRate:     exchangeRate.String(),
+		ExchangeRate: exchangeRate.String(),
 
-		IdempotencyKey:   input.IdempotencyKey,
-		Timestamp:        time.Now().UTC(),
+		IdempotencyKey: input.IdempotencyKey,
+		Timestamp:      time.Now().UTC(),
 	}
 
 	err = s.publisher.PublishTransferCreated(ctx, event)
@@ -80,4 +85,40 @@ func (s *AccountService) Transfer(
 	}
 
 	return result, nil
+}
+
+// resolveAccount - find account by source
+func (s *AccountService) resolveAccount(
+	ctx context.Context,
+	entityType string,
+	entityID uuid.UUID,
+) (*domain.Account, int32, error) {
+
+	switch entityType {
+	case "account":
+		acc, err := s.repo.GetByPublicID(ctx, entityID)
+		if err != nil {
+			return nil, 0, err
+		}
+		return acc, domain.SourceTypeIDAccount, nil
+
+	case "card":
+		card, err := s.repo.GetCardByID(ctx, entityID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		if card.Status != "active" {
+			return nil, 0, domain.ErrCardBlocked
+		}
+
+		acc, err := s.repo.GetAccountInternalByID(ctx, card.AccountID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to get account for card: %w", err)
+		}
+		return acc, domain.SourceTypeIDCard, nil
+
+	default:
+		return nil, 0, fmt.Errorf("unsupported entity type: %s", entityType)
+	}
 }

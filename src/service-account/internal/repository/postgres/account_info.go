@@ -38,3 +38,36 @@ func (r *AccountRepo) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*d
 		UpdatedAt:    dbAcc.UpdatedAt.Time,
 	}, nil
 }
+
+func (r *AccountRepo) GetAccountInternalByID(ctx context.Context, id int64) (*domain.Account, error) {
+	row, err := r.queries.GetAccountByID(ctx, id)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, domain.ErrAccountNotFound
+		}
+		return nil, fmt.Errorf("failed to get account by internal id: %w", err)
+	}
+
+	var publicID uuid.UUID
+	if row.PublicID.Valid {
+		publicID = uuid.UUID(row.PublicID.Bytes)
+	}
+
+	var userID uuid.UUID
+	if row.UserID.Valid {
+		userID = uuid.UUID(row.UserID.Bytes)
+	}
+
+	return &domain.Account{
+		ID:           row.ID,
+		PublicID:     publicID,
+		UserID:       userID,
+		TypeID:       row.TypeID.Int32,
+		StatusID:     row.StatusID.Int32,
+		CurrencyCode: row.CurrencyCode.String,
+		Name:         row.Name.String,
+		Version:      row.Version.Int32,
+		CreatedAt:    row.CreatedAt.Time,
+		UpdatedAt:    row.UpdatedAt.Time,
+	}, nil
+}

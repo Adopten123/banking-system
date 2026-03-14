@@ -65,6 +65,22 @@ CREATE TABLE "account_balances"
     "updated_at"   timestamptz
 );
 
+CREATE TABLE "transactions"
+(
+    "id"                  uuid PRIMARY KEY,
+    "source_type_id"      int,
+    "source_id"           uuid,
+    "destination_type_id" int,
+    "destination_id"      uuid,
+    "category_id"         int,
+    "status_id"           int,
+    "description"         text,
+    "external_details"    jsonb,
+    "idempotency_key"     varchar(255) UNIQUE,
+    "created_at"          timestamptz DEFAULT (now()),
+    "updated_at"          timestamptz DEFAULT (now())
+);
+
 CREATE TABLE "cards"
 (
     "id"          uuid PRIMARY KEY,
@@ -74,20 +90,6 @@ CREATE TABLE "cards"
     "is_virtual"  boolean     DEFAULT false,
     "status"      varchar(20) DEFAULT 'active',
     "created_at"  timestamptz DEFAULT (now())
-);
-
-CREATE TABLE "transactions"
-(
-    "id"               uuid PRIMARY KEY,
-    "source_type_id"   int,
-    "source_id"        uuid,
-    "category_id"      int,
-    "status_id"        int,
-    "description"      text,
-    "external_details" jsonb,
-    "idempotency_key"  varchar(255) UNIQUE,
-    "created_at"       timestamptz DEFAULT (now()),
-    "updated_at"       timestamptz DEFAULT (now())
 );
 
 CREATE TABLE "postings"

@@ -95,12 +95,22 @@ func (r *AccountRepo) TransferTx(
 	txUUID := uuid.New()
 	pgTxID := pgtype.UUID{Bytes: txUUID, Valid: true}
 
+	var pgSourceID pgtype.UUID
+	_ = pgSourceID.Scan(params.SourceID.String())
+
+	var pgDestinationID pgtype.UUID
+	_ = pgDestinationID.Scan(params.DestinationID.String())
+
 	_, err = qtx.CreateTransaction(ctx, CreateTransactionParams{
-		ID:             pgTxID,
-		IdempotencyKey: pgtype.Text{String: params.IdempotencyKey, Valid: true},
-		CategoryID:     pgtype.Int4{Int32: 3, Valid: true},
-		StatusID:       pgtype.Int4{Int32: 2, Valid: true},
-		Description:    pgtype.Text{String: params.Description, Valid: true},
+		ID:                pgTxID,
+		SourceTypeID:      pgtype.Int4{Int32: params.SourceTypeID, Valid: true},
+		SourceID:          pgSourceID,
+		DestinationTypeID: pgtype.Int4{Int32: params.DestinationTypeID, Valid: true},
+		DestinationID:     pgDestinationID,
+		IdempotencyKey:    pgtype.Text{String: params.IdempotencyKey, Valid: true},
+		CategoryID:        pgtype.Int4{Int32: 3, Valid: true},
+		StatusID:          pgtype.Int4{Int32: 2, Valid: true},
+		Description:       pgtype.Text{String: params.Description, Valid: true},
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError

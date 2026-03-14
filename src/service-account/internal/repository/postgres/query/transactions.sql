@@ -3,14 +3,18 @@ INSERT INTO transactions (
     id,
     source_type_id,
     source_id,
+    destination_type_id,
+    destination_id,
     category_id,
     status_id,
     description,
     external_details,
     idempotency_key
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING id, source_type_id, source_id, category_id, status_id, description, external_details, idempotency_key, created_at, updated_at;
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING id, source_type_id, source_id, destination_type_id,
+    destination_id, category_id, status_id, description, external_details,
+    idempotency_key, created_at, updated_at;
 
 -- name: CreatePosting :one
 INSERT INTO postings (transaction_id, account_id, amount, currency_code, exchange_rate)
