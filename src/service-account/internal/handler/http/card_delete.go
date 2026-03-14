@@ -1,8 +1,8 @@
 package http
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,7 +18,7 @@ import (
 // @Success      200      {string}  string  "Card deleted successfully"
 // @Router       /api/cards/{card_id} [delete]
 func (h *Handler) deleteCard(w http.ResponseWriter, r *http.Request) {
-	cardIDStr := chi.URLParam(r, "card_id")
+	cardIDStr := chi.URLParam(r, "id")
 	cardUUID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		http.Error(w, "invalid card ID", http.StatusBadRequest)

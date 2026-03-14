@@ -25,7 +25,7 @@ import (
 // @Failure      500      {string}  string         "Внутренняя ошибка сервера"
 // @Router       /api/cards/{card_id}/pin [post]
 func (h *Handler) setCardPin(w http.ResponseWriter, r *http.Request) {
-	cardIDStr := chi.URLParam(r, "card_id")
+	cardIDStr := chi.URLParam(r, "id")
 	cardUUID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		http.Error(w, "invalid card ID format", http.StatusBadRequest)

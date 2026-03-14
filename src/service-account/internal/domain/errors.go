@@ -4,7 +4,8 @@ import "errors"
 
 // ErrSystem - Problem is not related to business rules
 var (
-	ErrSystem = errors.New("internal server error")
+	ErrSystem        = errors.New("internal server error")
+	ErrInvalidFormat = errors.New("invalid id format")
 )
 
 // Account Errors
@@ -18,6 +19,7 @@ var (
 var (
 	ErrInsufficientFunds    = errors.New("insufficient funds")
 	ErrDuplicateTransaction = errors.New("duplicate transaction: idempotency key already exists")
+	ErrTransferToSelf = errors.New("cannot transfer to the same account")
 )
 
 // Validation Errors

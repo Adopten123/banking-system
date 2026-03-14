@@ -23,7 +23,7 @@ import (
 // @Failure      500      {string} string "Внутренняя ошибка сервера"
 // @Router       /api/cards/{card_id}/status [patch]
 func (h *Handler) updateCardStatus(w http.ResponseWriter, r *http.Request) {
-	cardIDStr := chi.URLParam(r, "card_id")
+	cardIDStr := chi.URLParam(r, "id")
 	cardUUID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		http.Error(w, "invalid card ID", http.StatusBadRequest)

@@ -22,7 +22,7 @@ import (
 // @Failure      404       {string}  string  "Карта не найдена"
 // @Router       /api/cards/{card_id}/details [get]
 func (h *Handler) getCardDetails(w http.ResponseWriter, r *http.Request) {
-	cardIDStr := chi.URLParam(r, "card_id")
+	cardIDStr := chi.URLParam(r, "id")
 	cardUUID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		http.Error(w, "invalid card ID format", http.StatusBadRequest)

@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
 )
 
@@ -13,6 +14,7 @@ type MockCardVaultClient struct {
 	VerifyPinFunc        func(ctx context.Context, tokenID string, pin string) (bool, error)
 	DeleteCardDataFunc   func(ctx context.Context, tokenID string) error
 	VerifyCardFunc       func(ctx context.Context, input domain.VerifyCardInput) (bool, string, error)
+	GetTokenByPanFunc    func(ctx context.Context, pan string) (string, error)
 }
 
 func (m *MockCardVaultClient) IssueCard(ctx context.Context, params domain.IssueCardParams) (domain.IssuedCardData, error) {
@@ -62,4 +64,11 @@ func (m *MockCardVaultClient) VerifyCard(ctx context.Context, input domain.Verif
 		return m.VerifyCardFunc(ctx, input)
 	}
 	return true, "", nil
+}
+
+func (m *MockCardVaultClient) GetTokenByPan(ctx context.Context, pan string) (string, error) {
+	if m.GetTokenByPanFunc != nil {
+		return m.GetTokenByPanFunc(ctx, pan)
+	}
+	return "", nil
 }

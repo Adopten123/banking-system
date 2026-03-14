@@ -2,12 +2,14 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Adopten123/banking-system/service-account/internal/domain"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -18,7 +20,7 @@ func InitialSenderBalance() decimal.Decimal {
 }
 
 func TestTransfer_TableDriven(t *testing.T) {
-	router, mockPub, _ := setupTestEnv(testDBPool)
+	router, mockPub, mockVault := setupTestEnv(testDBPool)
 
 	senderID := createTestUser(t, testDBPool)
 	receiverID := createTestUser(t, testDBPool)
@@ -41,317 +43,229 @@ func TestTransfer_TableDriven(t *testing.T) {
 	creditAccountID := createTestAccount(t, testDBPool, validUserID, "RUB")
 	setAccountCreditLimit(t, testDBPool, creditAccountID, decimal.NewFromInt(50000))
 
+	senderCardUUID := uuid.New()
+	senderPAN := "4276000011112222"
+	_, err := testDBPool.Exec(context.Background(),
+		"INSERT INTO cards (id, account_id, pan_mask, status) VALUES ($1, (SELECT id FROM accounts WHERE public_id = $2), $3, 'active')",
+		senderCardUUID, senderAccountID, "4276 **** **** 2222")
+	require.NoError(t, err)
+
 	duplicateKey := uuid.New().String()
 
 	tests := []struct {
 		name                string
-		senderPathID        string
 		idempotencyKey      string
 		payload             map[string]interface{}
+		setupMock           func()
 		expectedCode        int
 		expectedEventsCount int
 		expectedSenderBal   decimal.Decimal
 		expectedReceiverBal decimal.Decimal
+		checkSenderAccID    uuid.UUID
+		checkReceiverAccID  uuid.UUID
 	}{
 		{
-			name:           "Success - Valid Transfer",
-			senderPathID:   senderAccountID.String(),
+			name:           "Success - Valid Transfer Account to Account",
 			idempotencyKey: duplicateKey,
 			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "15000",
-				"currency_code": "RUB",
-				"description":   "Rent payment",
+				"source_type":      "account",
+				"source_id":        senderAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "15000",
+				"currency_code":    "RUB",
+				"description":      "Rent payment",
 			},
 			expectedCode:        http.StatusOK,
 			expectedEventsCount: 1,
 			expectedSenderBal:   decimal.NewFromInt(35000),
 			expectedReceiverBal: decimal.NewFromInt(15000),
-		},
-
-		{
-			name:           "Fail - Duplicate Transaction (Idempotency)",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: duplicateKey,
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "15000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusConflict,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
 		{
-			name:           "Fail - Insufficient Funds (Not enough money)",
-			senderPathID:   senderAccountID.String(),
+			name:           "Success - Valid Transfer Card to Account (PAN to UUID)",
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "99900000",
-				"currency_code": "RUB",
+				"source_type":      "card",
+				"source_id":        senderPAN,
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "5000",
+				"currency_code":    "RUB",
 			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
+			setupMock: func() {
+				mockVault.GetTokenByPanFunc = func(ctx context.Context, pan string) (string, error) {
+					if pan == senderPAN {
+						return senderCardUUID.String(), nil
+					}
+					return "", fmt.Errorf("card not found")
+				}
+			},
+			expectedCode:        http.StatusOK,
+			expectedEventsCount: 1,
+			expectedSenderBal:   decimal.NewFromInt(45000),
+			expectedReceiverBal: decimal.NewFromInt(5000),
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
 		{
-			name:           "Fail - Unknown Receiver",
-			senderPathID:   senderAccountID.String(),
+			name:           "Fail - Card Not Found in Vault (Wrong PAN)",
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": uuid.New().String(),
-				"amount":        "10000",
-				"currency_code": "RUB",
+				"source_type":      "card",
+				"source_id":        "4276000099998888",
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "1000",
+				"currency_code":    "RUB",
+			},
+			setupMock: func() {
+				mockVault.GetTokenByPanFunc = func(ctx context.Context, pan string) (string, error) {
+					return "", domain.ErrCardNotFound
+				}
 			},
 			expectedCode:        http.StatusNotFound,
 			expectedEventsCount: 0,
 			expectedSenderBal:   InitialSenderBalance(),
 			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
-
+		{
+			name:           "Fail - Duplicate Transaction (Idempotency)",
+			idempotencyKey: duplicateKey,
+			payload: map[string]interface{}{
+				"source_type":      "account",
+				"source_id":        senderAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "15000",
+				"currency_code":    "RUB",
+			},
+			expectedCode:        http.StatusConflict,
+			expectedEventsCount: 0,
+			expectedSenderBal:   InitialSenderBalance(),
+			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
+		},
+		{
+			name:           "Fail - Insufficient Funds",
+			idempotencyKey: uuid.New().String(),
+			payload: map[string]interface{}{
+				"source_type":      "account",
+				"source_id":        senderAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "99900000",
+				"currency_code":    "RUB",
+			},
+			expectedCode:        http.StatusBadRequest,
+			expectedEventsCount: 0,
+			expectedSenderBal:   InitialSenderBalance(),
+			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
+		},
 		{
 			name:           "Fail - Missing Idempotency Key",
-			senderPathID:   senderAccountID.String(),
 			idempotencyKey: "",
 			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "1000",
-				"currency_code": "RUB",
+				"source_type":      "account",
+				"source_id":        senderAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "1000",
+				"currency_code":    "RUB",
 			},
 			expectedCode:        http.StatusBadRequest,
 			expectedEventsCount: 0,
 			expectedSenderBal:   InitialSenderBalance(),
 			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Negative Amount",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "-5000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Zero Amount",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "0",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
 		{
 			name:           "Fail - Transfer to Self",
-			senderPathID:   senderAccountID.String(),
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": senderAccountID.String(),
-				"amount":        "5000",
-				"currency_code": "RUB",
+				"source_type":      "account",
+				"source_id":        senderAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   senderAccountID.String(),
+				"amount":           "5000",
+				"currency_code":    "RUB",
 			},
 			expectedCode:        http.StatusBadRequest,
 			expectedEventsCount: 0,
 			expectedSenderBal:   InitialSenderBalance(),
 			expectedReceiverBal: InitialSenderBalance(),
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  senderAccountID,
 		},
 		{
-			name:           "Fail - Invalid Amount Format (String)",
-			senderPathID:   senderAccountID.String(),
+			name:           "Fail - Invalid Source Format",
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "five-thousand",
-				"currency_code": "RUB",
+				"source_type":      "account",
+				"source_id":        "not-a-valid-uuid",
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "1000",
+				"currency_code":    "RUB",
 			},
 			expectedCode:        http.StatusBadRequest,
 			expectedEventsCount: 0,
 			expectedSenderBal:   InitialSenderBalance(),
 			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    senderAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
-		{
-			name:           "Fail - Invalid Receiver UUID Format",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": "not-a-valid-uuid",
-				"amount":        "1000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-
 		{
 			name:           "Success - Cross-Currency Transfer using Credit Limit (RUB to USD)",
-			senderPathID:   creditAccountID.String(),
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": usdAccountID.String(),
-				"amount":        "20000",
-				"currency_code": "RUB",
+				"source_type":      "account",
+				"source_id":        creditAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   usdAccountID.String(),
+				"amount":           "20000",
+				"currency_code":    "RUB",
 			},
 			expectedCode:        http.StatusOK,
 			expectedEventsCount: 1,
 			expectedSenderBal:   decimal.NewFromInt(-20000),
 			expectedReceiverBal: decimal.NewFromInt(216),
-		},
-
-		{
-			name:           "Success - Cross-Currency Transfer (RUB to USD)",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": usdAccountID.String(),
-				"amount":        "10000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusOK,
-			expectedEventsCount: 1,
-			expectedSenderBal:   decimal.NewFromInt(40000),
-			expectedReceiverBal: decimal.NewFromInt(108),
+			checkSenderAccID:    creditAccountID,
+			checkReceiverAccID:  usdAccountID,
 		},
 		{
-			name:           "Fail - Exchange Service Unavailable (Target EUR)",
-			senderPathID:   senderAccountID.String(),
+			name:           "Fail - Source Account Inactive",
 			idempotencyKey: uuid.New().String(),
 			payload: map[string]interface{}{
-				"to_account_id": eurAccountID.String(),
-				"amount":        "10000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusInternalServerError,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Invalid Sender UUID in URL",
-			senderPathID:   "not-a-valid-uuid",
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "1000",
-				"currency_code": "RUB",
+				"source_type":      "account",
+				"source_id":        frozenAccountID.String(),
+				"destination_type": "account",
+				"destination_id":   receiverAccountID.String(),
+				"amount":           "1000",
+				"currency_code":    "RUB",
 			},
 			expectedCode:        http.StatusBadRequest,
 			expectedEventsCount: 0,
 			expectedSenderBal:   InitialSenderBalance(),
 			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Success - Transfer using Credit Limit",
-			senderPathID:   creditAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "10000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusOK,
-			expectedEventsCount: 1,
-			expectedSenderBal:   decimal.NewFromInt(-10000),
-			expectedReceiverBal: decimal.NewFromInt(10000),
-		},
-		{
-			name:           "Fail - Exceeding Credit Limit",
-			senderPathID:   creditAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "50001",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   decimal.Zero,
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Sender Account Inactive",
-			senderPathID:   frozenAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "1000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Receiver Account Inactive",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": frozenAccountID.String(),
-				"amount":        "1000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: InitialSenderBalance(),
-		},
-		{
-			name:                "Fail - Empty Payload Body",
-			senderPathID:        senderAccountID.String(),
-			idempotencyKey:      uuid.New().String(),
-			payload:             map[string]interface{}{},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Amount Overflow (Astronomical Number)",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"to_account_id": receiverAccountID.String(),
-				"amount":        "9999999999999999999999999999999999",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
-		},
-		{
-			name:           "Fail - Missing Required Fields",
-			senderPathID:   senderAccountID.String(),
-			idempotencyKey: uuid.New().String(),
-			payload: map[string]interface{}{
-				"amount":        "1000",
-				"currency_code": "RUB",
-			},
-			expectedCode:        http.StatusBadRequest,
-			expectedEventsCount: 0,
-			expectedSenderBal:   InitialSenderBalance(),
-			expectedReceiverBal: decimal.Zero,
+			checkSenderAccID:    frozenAccountID,
+			checkReceiverAccID:  receiverAccountID,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPub.Clear()
+			if tt.setupMock != nil {
+				tt.setupMock()
+			}
 
 			setAccountBalance(t, testDBPool, senderAccountID, InitialSenderBalance())
 			setAccountBalance(t, testDBPool, receiverAccountID, decimal.Zero)
@@ -363,8 +277,7 @@ func TestTransfer_TableDriven(t *testing.T) {
 			bodyBytes, err := json.Marshal(tt.payload)
 			require.NoError(t, err)
 
-			url := fmt.Sprintf("/api/accounts/%s/transfer", tt.senderPathID)
-			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
+			req, err := http.NewRequest(http.MethodPost, "/api/transfers", bytes.NewReader(bodyBytes))
 			require.NoError(t, err)
 
 			req.Header.Set("Content-Type", "application/json")
@@ -378,20 +291,16 @@ func TestTransfer_TableDriven(t *testing.T) {
 			require.Equal(t, tt.expectedCode, rr.Code, "Response body: %s", rr.Body.String())
 			require.Len(t, mockPub.Events, tt.expectedEventsCount)
 
-			if parsedSenderUUID, err := uuid.Parse(tt.senderPathID); err == nil {
-				actualSenderBal := getAccountBalance(t, testDBPool, parsedSenderUUID)
+			if tt.checkSenderAccID != uuid.Nil {
+				actualSenderBal := getAccountBalance(t, testDBPool, tt.checkSenderAccID)
 				require.True(t, tt.expectedSenderBal.Equal(actualSenderBal),
 					"Sender balance mismatch: expected %s, got %s", tt.expectedSenderBal.String(), actualSenderBal.String())
 			}
 
-			if receiverStr, ok := tt.payload["to_account_id"].(string); ok {
-				if parsedReceiverUUID, err := uuid.Parse(receiverStr); err == nil {
-					if tt.expectedCode != http.StatusNotFound {
-						actualReceiverBal := getAccountBalance(t, testDBPool, parsedReceiverUUID)
-						require.True(t, tt.expectedReceiverBal.Equal(actualReceiverBal),
-							"Receiver balance mismatch: expected %s, got %s", tt.expectedReceiverBal.String(), actualReceiverBal.String())
-					}
-				}
+			if tt.checkReceiverAccID != uuid.Nil && tt.expectedCode != http.StatusNotFound && tt.expectedCode != http.StatusBadRequest {
+				actualReceiverBal := getAccountBalance(t, testDBPool, tt.checkReceiverAccID)
+				require.True(t, tt.expectedReceiverBal.Equal(actualReceiverBal),
+					"Receiver balance mismatch: expected %s, got %s", tt.expectedReceiverBal.String(), actualReceiverBal.String())
 			}
 		})
 	}

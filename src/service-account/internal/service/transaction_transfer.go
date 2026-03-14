@@ -25,6 +25,10 @@ func (s *AccountService) Transfer(
 		return nil, fmt.Errorf("receiver resolution failed: %w", err)
 	}
 
+	if fromAcc.ID == toAcc.ID {
+		return nil, domain.ErrTransferToSelf
+	}
+
 	transferAmount, err := decimal.NewFromString(input.Amount)
 	if err != nil {
 		return nil, err
@@ -98,7 +102,7 @@ func (s *AccountService) resolveAccount(
 	case "account":
 		accUUID, err := uuid.Parse(entityValue)
 		if err != nil {
-			return nil, 0, uuid.Nil, fmt.Errorf("invalid account public_id format: %w", err)
+			return nil, 0, uuid.Nil, domain.ErrInvalidFormat
 		}
 
 		acc, err := s.repo.GetByPublicID(ctx, accUUID)

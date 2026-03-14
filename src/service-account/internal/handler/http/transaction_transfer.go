@@ -55,6 +55,11 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if errors.Is(err, domain.ErrInvalidFormat) || errors.Is(err, domain.ErrTransferToSelf) {
+			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", err.Error(), err)
+			return
+		}
+
 		if errors.Is(err, domain.ErrAccountInactive) || errors.Is(err, domain.ErrCardBlocked) {
 			respondWithError(w, http.StatusBadRequest, "INACTIVE", "Source or destination is blocked or inactive", err)
 			return
