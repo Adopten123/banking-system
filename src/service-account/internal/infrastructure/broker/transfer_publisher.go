@@ -36,27 +36,3 @@ func (p *RabbitMQPublisher) publishMessage(ctx context.Context, event domain.Dom
 
 	return nil
 }
-
-func (p *RabbitMQPublisher) PublishTransferCreated(ctx context.Context, event domain.TransferCreatedEvent) error {
-	return p.publishMessage(ctx, event)
-}
-
-func (p *RabbitMQPublisher) PublishAccountCreated(ctx context.Context, event domain.AccountCreatedEvent) error {
-	return p.publishMessage(ctx, event)
-}
-
-func (p *RabbitMQPublisher) PublishAccountStatusChanged(ctx context.Context, event domain.AccountStatusChangedEvent) error {
-	return p.publishMessage(ctx, event)
-}
-
-func (p *RabbitMQPublisher) PublishDepositCompleted(ctx context.Context, event domain.DepositCompletedEvent) error {
-	return p.publishMessage(ctx, event)
-}
-
-func (p *RabbitMQPublisher) PublishWithdrawalCompleted(ctx context.Context, event domain.WithdrawalCompletedEvent) error {
-	return p.publishMessage(ctx, event)
-}
-
-func (p *RabbitMQPublisher) PublishCreditLimitChanged(ctx context.Context, event domain.CreditLimitChangedEvent) error {
-	return p.publishMessage(ctx, event)
-}

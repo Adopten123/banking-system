@@ -47,6 +47,13 @@ func (m *MockPublisher) PublishCreditLimitChanged(ctx context.Context, event dom
 	return nil
 }
 
+func (m *MockPublisher) PublishCardIssued(ctx context.Context, event domain.CardIssuedEvent) error {
+	return nil
+}
+func (m *MockPublisher) PublishCardStatusChanged(ctx context.Context, event domain.CardStatusChangedEvent) error {
+	return nil
+}
+
 // Clear - cleanses events before new tests
 func (m *MockPublisher) Clear() {
 	m.Events = make([]domain.DomainEvent, 0)

@@ -18,7 +18,7 @@ func (s *AccountService) IssueCard(ctx context.Context, input domain.IssueCardIn
 	}
 
 	if acc.StatusID != activeStatus {
-		return nil, fmt.Errorf("cannot issue card: account is not active")
+		return nil, domain.ErrAccountInactive
 	}
 
 	vaultData, err := s.vault.IssueCard(ctx, domain.IssueCardParams{
@@ -34,7 +34,8 @@ func (s *AccountService) IssueCard(ctx context.Context, input domain.IssueCardIn
 		return nil, fmt.Errorf("vault returned invalid token UUID: %w", err)
 	}
 
-	expiryDate := time.Date(int(vaultData.ExpiryYear), time.Month(vaultData.ExpiryMonth), 1, 0, 0, 0, 0, time.UTC)
+	nextMonth := time.Date(int(vaultData.ExpiryYear), time.Month(vaultData.ExpiryMonth)+1, 1, 0, 0, 0, 0, time.UTC)
+	expiryDate := nextMonth.Add(-time.Second)
 
 	card := &domain.Card{
 		ID:        tokenUUID,
@@ -48,7 +49,22 @@ func (s *AccountService) IssueCard(ctx context.Context, input domain.IssueCardIn
 
 	err = s.repo.CreateCard(ctx, card)
 	if err != nil {
+		rollbackErr := s.vault.DeleteCardData(ctx, vaultData.TokenID)
+		if rollbackErr != nil {
+			fmt.Printf("CRITICAL: Failed to rollback vault for token %s: %v\n", vaultData.TokenID, rollbackErr)
+		}
 		return nil, fmt.Errorf("failed to save card to database: %w", err)
 	}
+
+	err = s.publisher.PublishCardIssued(ctx, domain.CardIssuedEvent{
+		CardID:    card.ID,
+		AccountID: card.AccountID,
+		PanMask:   card.PANMask,
+		Timestamp: time.Now().UTC(),
+	})
+	if err != nil {
+		fmt.Printf("ERROR: Failed to publish CardIssued event: %v\n", err)
+	}
+
 	return card, nil
 }

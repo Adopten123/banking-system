@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
@@ -67,16 +68,18 @@ func (s *AccountService) Transfer(
 
 	event := domain.TransferCreatedEvent{
 		TransactionID: result.TransactionID,
-		FromAccountID: fromAcc.ID,
-		ToAccountID:   toAcc.ID,
 
-		SenderAmount:   transferAmount.String(),
-		SenderCurrency: fromAcc.CurrencyCode,
+		SourceType: input.SourceType,
+		SourceID:   sourceUUID,
 
+		DestinationType: input.DestinationType,
+		DestinationID:   destinationUUID,
+
+		SenderAmount:     input.Amount,
+		SenderCurrency:   fromAcc.CurrencyCode,
 		ReceiverAmount:   receiverAmount.String(),
 		ReceiverCurrency: toAcc.CurrencyCode,
-
-		ExchangeRate: exchangeRate.String(),
+		ExchangeRate:     exchangeRate.String(),
 
 		IdempotencyKey: input.IdempotencyKey,
 		Timestamp:      time.Now().UTC(),
@@ -84,7 +87,8 @@ func (s *AccountService) Transfer(
 
 	err = s.publisher.PublishTransferCreated(ctx, event)
 	if err != nil {
-		fmt.Printf("ERROR: Failed to publish transfer event for idempotency key %s: %v\n", input.IdempotencyKey, err)
+		log.Printf("ERROR: Failed to publish TransferCreated event for key %s: %v\n",
+			input.IdempotencyKey, err)
 	}
 
 	return result, nil

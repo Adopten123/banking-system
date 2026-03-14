@@ -40,15 +40,17 @@ func (s *AccountService) Deposit(
 	}
 
 	err = s.publisher.PublishDepositCompleted(ctx, domain.DepositCompletedEvent{
-		TransactionID: result.TransactionID,
-		AccountID:     acc.ID,
-		Amount:        input.AmountStr,
-		Currency:      acc.CurrencyCode,
-		Timestamp:     time.Now().UTC(),
+		TransactionID:   result.TransactionID,
+		DestinationType: input.DestinationType,
+		DestinationID:   destinationUUID,
+		Amount:          input.AmountStr,
+		Currency:        acc.CurrencyCode,
+		Timestamp:       time.Now().UTC(),
 	})
 
 	if err != nil {
-		log.Printf("ERROR: Failed to publish DepositCompleted event for account %d: %v\n", acc.ID, err)
+		log.Printf("ERROR: Failed to publish DepositCompleted event for %s %s: %v\n",
+			input.DestinationType, destinationUUID, err)
 	}
 
 	return result, nil

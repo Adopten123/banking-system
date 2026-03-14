@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/domain"
@@ -42,13 +43,16 @@ func (s *AccountService) Withdraw(
 
 	err = s.publisher.PublishWithdrawalCompleted(ctx, domain.WithdrawalCompletedEvent{
 		TransactionID: result.TransactionID,
-		AccountID:     acc.ID,
-		Amount:        amount.String(),
-		Currency:      result.Currency,
+		SourceType:    input.SourceType,
+		SourceID:      sourceUUID,
+		Amount:        input.AmountStr,
+		Currency:      acc.CurrencyCode,
 		Timestamp:     time.Now().UTC(),
 	})
+
 	if err != nil {
-		fmt.Printf("ERROR: Failed to publish Withdrawal event for tx %s: %v\n", result.TransactionID, err)
+		log.Printf("ERROR: Failed to publish WithdrawalCompleted event for tx %s: %v\n",
+			result.TransactionID, err)
 	}
 
 	return result, nil
