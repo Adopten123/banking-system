@@ -36,6 +36,11 @@ func (h *Handler) deposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.DestinationType == "" || req.DestinationID == "" {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "destination_type and destination_id are required", nil)
+		return
+	}
+
 	result, err := h.service.Deposit(r.Context(), domain.ServiceDepositInput{
 		DestinationType:  req.DestinationType,
 		DestinationValue: req.DestinationID,

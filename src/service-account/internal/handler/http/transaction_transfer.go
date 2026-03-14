@@ -35,6 +35,15 @@ func (h *Handler) transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.SourceType == "" || req.SourceID == "" {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "source type and source id are required", nil)
+	}
+
+	if req.DestinationType == "" || req.DestinationID == "" {
+		respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "destination_type and destination_id are required", nil)
+		return
+	}
+
 	result, err := h.service.Transfer(
 		r.Context(),
 		domain.TransferInput{
