@@ -24,7 +24,7 @@ func (s *AccountService) Withdraw(
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidAmountFormat, err)
 	}
 	if !amount.IsPositive() {
-		return nil, fmt.Errorf("withdraw amount must be positive")
+		return nil, domain.ErrInvalidWithdrawAmount
 	}
 
 	params := domain.RepoWithdrawParams{

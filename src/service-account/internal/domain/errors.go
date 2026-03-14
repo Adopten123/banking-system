@@ -25,6 +25,7 @@ var (
 // Validation Errors
 var (
 	ErrInvalidDepositAmount = errors.New("deposit amount must be greater than zero")
+	ErrInvalidWithdrawAmount = errors.New("withdraw amount must be strictly greater than zero")
 	ErrInvalidAmountFormat  = errors.New("invalid amount format")
 )
 

@@ -68,6 +68,10 @@ func (h *Handler) withdraw(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusConflict, "DUPLICATE_REQUEST", "Transaction with this Idempotency-Key already exists", err)
 			return
 		}
+		if errors.Is(err, domain.ErrInvalidAmountFormat) || errors.Is(err, domain.ErrInvalidWithdrawAmount) {
+			respondWithError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid withdrawal amount", err)
+			return
+		}
 
 		respondWithError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to process withdrawal", err)
 		return
