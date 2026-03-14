@@ -104,81 +104,64 @@ CREATE TABLE "postings"
 
 CREATE TABLE "recurring_payments"
 (
-    "id"                     uuid PRIMARY KEY,
-    "source_account_id"      bigint,
-    "destination_account_id" bigint,
-    "amount"                 numeric(78, 0) NOT NULL,
-    "currency_code"          varchar(10),
-    "category_id"            int,
-    "cron_expression"        varchar(50),
-    "next_execution_time"    timestamptz    NOT NULL,
-    "is_active"              boolean     DEFAULT true,
-    "description"            text,
-    "created_at"             timestamptz DEFAULT (now())
+    "id"                  uuid PRIMARY KEY,
+
+    "source_type_id"      int NOT NULL,
+    "source_id"           uuid NOT NULL,
+
+    "destination_type_id" int,
+    "destination_id"      uuid,
+
+    "amount"              numeric(78, 0) NOT NULL,
+    "currency_code"       varchar(10),
+    "category_id"         int,
+    "cron_expression"     varchar(50) NOT NULL,
+    "next_execution_time" timestamptz NOT NULL,
+    "is_active"           boolean DEFAULT true,
+    "description"         text,
+    "created_at"          timestamptz DEFAULT (now()),
+    "updated_at"          timestamptz DEFAULT (now())
 );
 
-COMMENT
-ON COLUMN "currencies"."code" IS 'ISO 4217: USD, RUB, JPY';
-COMMENT
-ON COLUMN "currencies"."exponent" IS 'Количество копеек. 2 для USD/RUB, 0 для JPY';
-COMMENT
-ON COLUMN "transaction_categories"."mcc_code" IS 'ISO 18245';
-COMMENT
-ON COLUMN "transaction_statuses"."name" IS 'pending, posted, failed, rolled_back';
-COMMENT
-ON COLUMN "account_types"."name" IS 'current, credit, savings';
-COMMENT
-ON COLUMN "account_statuses"."name" IS 'active, frozen, blocked, closed';
-COMMENT
-ON COLUMN "users"."id" IS 'ID from SSO';
-COMMENT
-ON COLUMN "accounts"."public_id" IS 'Для API';
-COMMENT
-ON COLUMN "accounts"."version" IS 'Optimistic Locking';
-COMMENT
-ON COLUMN "account_balances"."balance" IS 'Сумма всех postings. Кэш.';
-COMMENT
-ON COLUMN "cards"."pan_mask" IS '4276 **** **** 9999';
-COMMENT
-ON COLUMN "cards"."status" IS 'active, blocked, expired';
-COMMENT
-ON COLUMN "transactions"."external_details" IS 'Данные от провайдера, device_id и т.д.';
-COMMENT
-ON COLUMN "postings"."amount" IS 'Отрицательное = списание, Положительное = зачисление';
-COMMENT
-ON COLUMN "postings"."exchange_rate" IS 'Курс к базовой валюте системы или кросс-курс';
-COMMENT
-ON COLUMN "recurring_payments"."destination_account_id" IS 'Null если это вывод во вне';
+-- КОММЕНТАРИИ
+COMMENT ON COLUMN "currencies"."code" IS 'ISO 4217: USD, RUB, JPY';
+COMMENT ON COLUMN "currencies"."exponent" IS 'Количество копеек. 2 для USD/RUB, 0 для JPY';
+COMMENT ON COLUMN "transaction_categories"."mcc_code" IS 'ISO 18245';
+COMMENT ON COLUMN "transaction_statuses"."name" IS 'pending, posted, failed, rolled_back';
+COMMENT ON COLUMN "account_types"."name" IS 'current, credit, savings';
+COMMENT ON COLUMN "account_statuses"."name" IS 'active, frozen, blocked, closed';
+COMMENT ON COLUMN "users"."id" IS 'ID from SSO';
+COMMENT ON COLUMN "accounts"."public_id" IS 'Для API';
+COMMENT ON COLUMN "accounts"."version" IS 'Optimistic Locking';
+COMMENT ON COLUMN "account_balances"."balance" IS 'Сумма всех postings. Кэш.';
+COMMENT ON COLUMN "cards"."pan_mask" IS '4276 **** **** 9999';
+COMMENT ON COLUMN "cards"."status" IS 'active, blocked, expired';
+COMMENT ON COLUMN "transactions"."external_details" IS 'Данные от провайдера, device_id и т.д.';
+COMMENT ON COLUMN "postings"."amount" IS 'Отрицательное = списание, Положительное = зачисление';
+COMMENT ON COLUMN "postings"."exchange_rate" IS 'Курс к базовой валюте системы или кросс-курс';
+COMMENT ON COLUMN "recurring_payments"."destination_id" IS 'Null если это вывод во вне'; -- ИСПРАВЛЕНО
 
-ALTER TABLE "accounts"
-    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
-ALTER TABLE "accounts"
-    ADD FOREIGN KEY ("type_id") REFERENCES "account_types" ("id");
-ALTER TABLE "accounts"
-    ADD FOREIGN KEY ("status_id") REFERENCES "account_statuses" ("id");
-ALTER TABLE "accounts"
-    ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
-ALTER TABLE "account_balances"
-    ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
-ALTER TABLE "cards"
-    ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
-ALTER TABLE "transactions"
-    ADD FOREIGN KEY ("category_id") REFERENCES "transaction_categories" ("id");
-ALTER TABLE "transactions"
-    ADD FOREIGN KEY ("status_id") REFERENCES "transaction_statuses" ("id");
-ALTER TABLE "postings"
-    ADD FOREIGN KEY ("transaction_id") REFERENCES "transactions" ("id");
-ALTER TABLE "postings"
-    ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
-ALTER TABLE "postings"
-    ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
-ALTER TABLE "recurring_payments"
-    ADD FOREIGN KEY ("source_account_id") REFERENCES "accounts" ("id");
-ALTER TABLE "recurring_payments"
-    ADD FOREIGN KEY ("destination_account_id") REFERENCES "accounts" ("id");
-ALTER TABLE "recurring_payments"
-    ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
-ALTER TABLE "recurring_payments"
-    ADD FOREIGN KEY ("category_id") REFERENCES "transaction_categories" ("id");
+-- ВНЕШНИЕ КЛЮЧИ (FOREIGN KEYS)
+ALTER TABLE "accounts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "accounts" ADD FOREIGN KEY ("type_id") REFERENCES "account_types" ("id");
+ALTER TABLE "accounts" ADD FOREIGN KEY ("status_id") REFERENCES "account_statuses" ("id");
+ALTER TABLE "accounts" ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
+
+ALTER TABLE "account_balances" ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
+ALTER TABLE "cards" ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
+
+ALTER TABLE "transactions" ADD FOREIGN KEY ("category_id") REFERENCES "transaction_categories" ("id");
+ALTER TABLE "transactions" ADD FOREIGN KEY ("status_id") REFERENCES "transaction_statuses" ("id");
+ALTER TABLE "transactions" ADD FOREIGN KEY ("source_type_id") REFERENCES "transaction_source_types" ("id");
+ALTER TABLE "transactions" ADD FOREIGN KEY ("destination_type_id") REFERENCES "transaction_source_types" ("id");
+
+ALTER TABLE "postings" ADD FOREIGN KEY ("transaction_id") REFERENCES "transactions" ("id");
+ALTER TABLE "postings" ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
+ALTER TABLE "postings" ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
+
+ALTER TABLE "recurring_payments" ADD FOREIGN KEY ("source_type_id") REFERENCES "transaction_source_types" ("id");
+ALTER TABLE "recurring_payments" ADD FOREIGN KEY ("destination_type_id") REFERENCES "transaction_source_types" ("id");
+ALTER TABLE "recurring_payments" ADD FOREIGN KEY ("currency_code") REFERENCES "currencies" ("code");
+ALTER TABLE "recurring_payments" ADD FOREIGN KEY ("category_id") REFERENCES "transaction_categories" ("id");
 
 INSERT INTO "transaction_source_types" ("name") VALUES ('account'), ('card');

@@ -75,18 +75,21 @@ type Posting struct {
 }
 
 type RecurringPayment struct {
-	ID              pgtype.UUID `json:"id"`
-	SourceAccountID pgtype.Int8 `json:"source_account_id"`
+	ID                pgtype.UUID `json:"id"`
+	SourceTypeID      int32       `json:"source_type_id"`
+	SourceID          pgtype.UUID `json:"source_id"`
+	DestinationTypeID pgtype.Int4 `json:"destination_type_id"`
 	// Null если это вывод во вне
-	DestinationAccountID pgtype.Int8        `json:"destination_account_id"`
-	Amount               pgtype.Numeric     `json:"amount"`
-	CurrencyCode         pgtype.Text        `json:"currency_code"`
-	CategoryID           pgtype.Int4        `json:"category_id"`
-	CronExpression       pgtype.Text        `json:"cron_expression"`
-	NextExecutionTime    pgtype.Timestamptz `json:"next_execution_time"`
-	IsActive             pgtype.Bool        `json:"is_active"`
-	Description          pgtype.Text        `json:"description"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	DestinationID     pgtype.UUID        `json:"destination_id"`
+	Amount            pgtype.Numeric     `json:"amount"`
+	CurrencyCode      pgtype.Text        `json:"currency_code"`
+	CategoryID        pgtype.Int4        `json:"category_id"`
+	CronExpression    string             `json:"cron_expression"`
+	NextExecutionTime pgtype.Timestamptz `json:"next_execution_time"`
+	IsActive          pgtype.Bool        `json:"is_active"`
+	Description       pgtype.Text        `json:"description"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Transaction struct {
