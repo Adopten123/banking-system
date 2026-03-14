@@ -36,6 +36,9 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Post("/deposits", h.deposit)
 		r.Post("/transfers", h.transfer)
 		r.Post("/withdrawals", h.withdraw)
+
+		r.Post("/recurring-payments", h.createRecurringPayment)
+		r.Delete("/recurring-payments/{id}", h.cancelRecurringPayment)
 	})
 
 	r.Route("/api/accounts", func(r chi.Router) {

@@ -27,6 +27,9 @@ type AccountService interface {
 	BlockAccount(ctx context.Context, publicID uuid.UUID) error
 	CloseAccount(ctx context.Context, publicID uuid.UUID) error
 
+	CreateRecurringPayment(ctx context.Context, input CreateRecurringPaymentInput) (uuid.UUID, error)
+	CancelRecurringPayment(ctx context.Context, paymentID uuid.UUID) error
+
 	// ---- CARDS METHODS ----
 	IssueCard(ctx context.Context, input IssueCardInput) (*Card, error)
 	DeleteCard(ctx context.Context, cardID uuid.UUID) error

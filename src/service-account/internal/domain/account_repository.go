@@ -26,6 +26,9 @@ type AccountRepository interface {
 	UpdateStatus(ctx context.Context, accountID int64, statusID int32) error
 	CloseAccountTx(ctx context.Context, accountID int64) error
 
+	CreateRecurringPayment(ctx context.Context, p RecurringPayment) error
+	CancelRecurringPayment(ctx context.Context, id uuid.UUID) error
+
 	// ---- CARDS METHODS ----
 	CreateCard(ctx context.Context, card *Card) error
 	GetCardByID(ctx context.Context, cardID uuid.UUID) (*Card, error)
