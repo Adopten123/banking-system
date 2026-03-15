@@ -1032,6 +1032,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/recurring-payments": {
+            "post": {
+                "description": "Создает новый автоплатеж по CRON расписанию",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recurring_payments"
+                ],
+                "summary": "Создать регулярный платеж (подписку)",
+                "parameters": [
+                    {
+                        "description": "Данные автоплатежа",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.CreateRecurringPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recurring-payments/{id}": {
+            "delete": {
+                "description": "Отключает (деактивирует) автоплатеж по его ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recurring_payments"
+                ],
+                "summary": "Отменить регулярный платеж",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID подписки",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/transfers": {
             "post": {
                 "description": "Осуществляет безопасный перевод денег. Источником и получателем могут выступать счет (account) или карта (card).",
@@ -1269,6 +1336,38 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "pan": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Adopten123_banking-system_service-account_internal_domain.CreateRecurringPaymentRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "cron_expression": {
+                    "type": "string"
+                },
+                "currency_code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "destination_id": {
+                    "type": "string"
+                },
+                "destination_type": {
+                    "type": "string"
+                },
+                "source_id": {
+                    "type": "string"
+                },
+                "source_type": {
                     "type": "string"
                 }
             }

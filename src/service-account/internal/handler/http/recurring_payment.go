@@ -14,7 +14,7 @@ import (
 // @Tags         recurring_payments
 // @Accept       json
 // @Produce      json
-// @Param        body body CreateRecurringPaymentRequest true "Данные автоплатежа"
+// @Param        body body domain.CreateRecurringPaymentRequest true "Данные автоплатежа"
 // @Success      201  {object}  map[string]interface{}
 // @Router       /api/recurring-payments [post]
 func (h *Handler) createRecurringPayment(w http.ResponseWriter, r *http.Request) {

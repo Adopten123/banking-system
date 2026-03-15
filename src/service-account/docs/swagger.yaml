@@ -63,6 +63,27 @@ definitions:
       pan:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-account_internal_domain.CreateRecurringPaymentRequest:
+    properties:
+      amount:
+        type: string
+      category_id:
+        type: integer
+      cron_expression:
+        type: string
+      currency_code:
+        type: string
+      description:
+        type: string
+      destination_id:
+        type: string
+      destination_type:
+        type: string
+      source_id:
+        type: string
+      source_type:
+        type: string
+    type: object
   github_com_Adopten123_banking-system_service-account_internal_domain.DepositRequest:
     properties:
       amount:
@@ -911,6 +932,50 @@ paths:
       summary: Проверить реквизиты карты (Внутреннее API)
       tags:
       - Internal
+  /api/recurring-payments:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый автоплатеж по CRON расписанию
+      parameters:
+      - description: Данные автоплатежа
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Adopten123_banking-system_service-account_internal_domain.CreateRecurringPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Создать регулярный платеж (подписку)
+      tags:
+      - recurring_payments
+  /api/recurring-payments/{id}:
+    delete:
+      description: Отключает (деактивирует) автоплатеж по его ID
+      parameters:
+      - description: ID подписки
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Отменить регулярный платеж
+      tags:
+      - recurring_payments
   /api/transfers:
     post:
       consumes:
