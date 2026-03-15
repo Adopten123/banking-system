@@ -34,7 +34,7 @@ func (w *RecurringWorker) Start(ctx context.Context) {
 				log.Println("[WORKER] Recurring payments worker stopped gracefully")
 				return
 			case <-ticker.C:
-				w.processDuePayments(ctx)
+				w.ProcessDuePayments(ctx)
 			}
 		}
 	}()

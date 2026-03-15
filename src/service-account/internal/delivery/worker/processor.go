@@ -11,7 +11,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-func (w *RecurringWorker) processDuePayments(ctx context.Context) {
+func (w *RecurringWorker) ProcessDuePayments(ctx context.Context) {
 	payments, err := w.repo.GetDueRecurringPayments(ctx, 50)
 	if err != nil {
 		log.Printf("[WORKER ERROR] Failed to fetch due payments: %v", err)
