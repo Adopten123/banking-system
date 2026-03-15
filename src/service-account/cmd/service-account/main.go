@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/Adopten123/banking-system/service-account/internal/config"
+	"github.com/Adopten123/banking-system/service-account/internal/delivery/worker"
 	transport "github.com/Adopten123/banking-system/service-account/internal/handler/http"
 	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/broker"
 	"github.com/Adopten123/banking-system/service-account/internal/infrastructure/exchanger"
@@ -77,6 +79,12 @@ func main() {
 	// Init layers
 	repo := postgres.NewAccountRepo(pool)
 	svc := service.NewAccountService(repo, rabbitPublisher, exchangerClient, vaultClient)
+
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+
+	recWorker := worker.NewRecurringWorker(repo, svc)
+	recWorker.Start(workerCtx)
+
 	handler := transport.NewHandler(svc)
 	router := handler.InitRoutes()
 
@@ -84,6 +92,10 @@ func main() {
 	if err := srv.Run(); err != nil {
 		log.Fatalf("Server shutdown with error: %v", err)
 	}
+
+	log.Println("Stopping background workers...")
+	workerCancel()
+	time.Sleep(1 * time.Second)
 
 	log.Println("Server stopped properly")
 }

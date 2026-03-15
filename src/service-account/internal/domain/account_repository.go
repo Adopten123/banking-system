@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -28,6 +29,8 @@ type AccountRepository interface {
 
 	CreateRecurringPayment(ctx context.Context, p RecurringPayment) error
 	CancelRecurringPayment(ctx context.Context, id uuid.UUID) error
+	GetDueRecurringPayments(ctx context.Context, limit int32) ([]RecurringPayment, error)
+	UpdateRecurringPaymentNextRun(ctx context.Context, id uuid.UUID, nextRun time.Time) error
 
 	// ---- CARDS METHODS ----
 	CreateCard(ctx context.Context, card *Card) error
