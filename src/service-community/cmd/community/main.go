@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/Adopten123/banking-system/service-community/docs"
 	"github.com/Adopten123/banking-system/service-community/internal/app"
 	"github.com/Adopten123/banking-system/service-community/internal/config"
 	transport "github.com/Adopten123/banking-system/service-community/internal/handler/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/Adopten123/banking-system/service-community/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // @title           Community Service API
@@ -59,6 +61,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	postHandler.RegisterRoutes(r)
 
