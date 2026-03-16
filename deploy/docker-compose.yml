@@ -116,6 +116,20 @@ services:
       - "8085:8085"
     restart: unless-stopped
 
+  service-sso:
+    container_name: service_sso
+    build:
+      context: ../src/service-sso
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_URL=amqp://rmq_admin:secretpassword@rabbitmq:5672/
+    ports:
+      - "8086:8086"
+    depends_on:
+      rabbitmq:
+        condition: service_started
+    restart: unless-stopped
+
   service-account:
     container_name: service_account
     build:

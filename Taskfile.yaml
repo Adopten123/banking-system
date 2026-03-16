@@ -141,3 +141,16 @@ tasks:
     dir: src/service-community
     cmds:
       - swag init -g cmd/community/main.go -o ./docs --parseDependency --parseInternal
+
+  # ==========================================
+  # Service SSO (Mock)
+  # ==========================================
+  up:sso:
+    desc: "Пересобрать и перезапустить Service SSO"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-sso
+
+  logs:sso:
+    desc: "Логи Service SSO"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f service-sso
