@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,8 +9,27 @@ import (
 
 	"github.com/Adopten123/banking-system/service-community/internal/app"
 	"github.com/Adopten123/banking-system/service-community/internal/config"
+	transport "github.com/Adopten123/banking-system/service-community/internal/handler/http"
+	"github.com/Adopten123/banking-system/service-community/internal/repository/postgres"
+	"github.com/Adopten123/banking-system/service-community/internal/service"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
+// @title           Community Service API
+// @version         1.0
+// @description     Социальное ядро экосистемы Banking System. Отвечает за посты, ленту и мессенджер.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8083
+// @BasePath  /
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -18,21 +38,35 @@ func main() {
 
 	log.Printf("Starting Community Service in [%s] mode...", cfg.Env)
 
-	// TODO: init db, redis, rabbit
+	ctx := context.Background()
 
-	// TODO: init layers
+	// Init DB
+	dbPool := app.InitPostgres(ctx, cfg.DB.URL)
+	defer dbPool.Close()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	queries := postgres.New(dbPool)
+
+	postRepo := postgres.NewPostRepository(queries)
+	postService := service.NewPostService(postRepo)
+	postHandler := transport.NewPostHandler(postService)
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+
+	postHandler.RegisterRoutes(r)
 
 	// HTTP server
 	addr := fmt.Sprintf(":%d", cfg.HTTP.Port)
 	server := &http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: r,
 	}
 
 	// Run server

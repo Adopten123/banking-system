@@ -1,0 +1,105 @@
+basePath: /
+definitions:
+  github_com_Adopten123_banking-system_service-community_internal_domain.Post:
+    properties:
+      authorID:
+        type: string
+      commentsCount:
+        format: int32
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        format: int64
+        type: integer
+      isEdited:
+        type: boolean
+      isPinned:
+        type: boolean
+      likesCount:
+        format: int32
+        type: integer
+      mediaAttachments:
+        items:
+          format: int32
+          type: integer
+        type: array
+      relatedAssetTicker:
+        type: string
+      status:
+        type: string
+      typeID:
+        format: int32
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  internal_handler_http.CreatePostRequest:
+    properties:
+      author_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      content:
+        example: Привет, это мой первый пост!
+        type: string
+      related_asset_ticker:
+        example: AAPL
+        type: string
+      type_id:
+        example: 2
+        type: integer
+    type: object
+  internal_handler_http.ErrorResponse:
+    properties:
+      message:
+        example: invalid request body
+        type: string
+    type: object
+host: localhost:8083
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Социальное ядро экосистемы Banking System. Отвечает за посты, ленту
+    и мессенджер.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Community Service API
+  version: "1.0"
+paths:
+  /api/v1/posts:
+    post:
+      consumes:
+      - application/json
+      description: Creating new post in community (news, user-post или invest-idea)
+      parameters:
+      - description: Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_http.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-community_internal_domain.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler_http.ErrorResponse'
+      summary: Create new post
+      tags:
+      - posts
+swagger: "2.0"
