@@ -150,6 +150,27 @@ services:
       - rabbitmq
     restart: unless-stopped
 
+  service-community:
+    container_name: service_community
+    build:
+      context: ../src/service-community
+      dockerfile: Dockerfile
+    environment:
+      - CONFIG_PATH=config/local.yaml
+      - APP_DATABASE__URL=postgres://bank_admin:secretpassword@postgres:5432/community_db?sslmode=disable
+      - REDIS_URL=redis:6379
+      - RABBITMQ_URL=amqp://rmq_admin:secretpassword@rabbitmq:5672/
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    restart: unless-stopped
+
   api-gateway:
     image: nginx:alpine
     container_name: api_gateway

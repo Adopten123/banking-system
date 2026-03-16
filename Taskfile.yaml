@@ -99,3 +99,45 @@ tasks:
     desc: "Пересобрать и перезапустить Service Vault"
     cmds:
       - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-card-secure
+
+  # ==========================================
+  # Service Community
+  # ==========================================
+
+  run:community:
+    desc: "Локальный запуск Service Community"
+    dir: src/service-community
+    cmds:
+      - go run cmd/community/main.go
+
+  up:community:
+    desc: "Пересобрать Service Community"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} up -d --build service-community
+
+  logs:community:
+    desc: "Логи Service Community"
+    cmds:
+      - docker-compose -f {{.COMPOSE_FILE}} logs -f service-community
+
+  sqlc:community:
+    desc: "Генерация через sqlc"
+    dir: src/service-community
+    cmds:
+      - sqlc generate
+
+  migrate-up:community:
+    desc: "Накатить все миграции базы данных для Community"
+    cmds:
+      - migrate -path src/service-community/migrations -database "postgresql://bank_admin:secretpassword@localhost:5499/community_db?sslmode=disable" up
+
+  migrate-down:community:
+    desc: "Откатить последнюю миграцию для Community на 1 шаг"
+    cmds:
+      - migrate -path src/service-community/migrations -database "postgresql://bank_admin:secretpassword@localhost:5499/community_db?sslmode=disable" down 1
+
+  swag:community:
+    desc: "Сгенерировать документацию Swagger для Community"
+    dir: src/service-community
+    cmds:
+      - swag init -g cmd/community/main.go -o ./docs --parseDependency --parseInternal

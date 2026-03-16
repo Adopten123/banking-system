@@ -1,0 +1,9 @@
+env: "local"
+http:
+  port: 8083
+db:
+  url: "postgres://bank_admin:secretpassword@postgres:5432/community_db?sslmode=disable"
+redis:
+  addr: "redis:6379"
+rabbitmq:
+  url: "amqp://rmq_admin:secretpassword@rabbitmq:5672/"
