@@ -1,21 +1,27 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
+
+	"github.com/Adopten123/banking-system/service-community/internal/app"
+	"github.com/Adopten123/banking-system/service-community/internal/config"
 )
 
 func main() {
-	log.Println("Starting Community Service...")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Fatal error loading config: %v", err)
+	}
+
+	log.Printf("Starting Community Service in [%s] mode...", cfg.Env)
 
 	// TODO: init db, redis, rabbit
 
 	// TODO: init layers
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -23,31 +29,24 @@ func main() {
 	})
 
 	// HTTP server
+	addr := fmt.Sprintf(":%d", cfg.HTTP.Port)
 	server := &http.Server{
-		Addr:    ":8083",
+		Addr:    addr,
 		Handler: mux,
 	}
 
 	// Run server
 	go func() {
-		log.Printf("Server is listening on port %s", server.Addr)
+		log.Printf("HTTP server is listening on %s", addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
 
 	// Graceful Shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
-	}
-
-	log.Println("Server exiting")
+	app.GracefulShutdown(
+		5*time.Second,
+		"Community Service",
+		server.Shutdown,
+	)
 }
