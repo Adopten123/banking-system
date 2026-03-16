@@ -10,6 +10,7 @@ import (
 	_ "github.com/Adopten123/banking-system/service-community/docs"
 	"github.com/Adopten123/banking-system/service-community/internal/app"
 	"github.com/Adopten123/banking-system/service-community/internal/config"
+	deliveryRMQ "github.com/Adopten123/banking-system/service-community/internal/delivery/rabbitmq"
 	transport "github.com/Adopten123/banking-system/service-community/internal/handler/http"
 	"github.com/Adopten123/banking-system/service-community/internal/repository/postgres"
 	"github.com/Adopten123/banking-system/service-community/internal/service"
@@ -51,6 +52,16 @@ func main() {
 	postRepo := postgres.NewPostRepository(queries)
 	postService := service.NewPostService(postRepo)
 	postHandler := transport.NewPostHandler(postService)
+
+	profileRepo := postgres.NewProfileRepository(queries)
+	profileService := service.NewProfileService(profileRepo)
+
+	ssoConsumer, err := deliveryRMQ.NewSSOConsumer(cfg.RabbitMQ.URL, profileService)
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ consumer: %v", err)
+	}
+
+	ssoConsumer.Start(ctx)
 
 	r := chi.NewRouter()
 
