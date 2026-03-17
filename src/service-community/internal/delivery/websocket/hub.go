@@ -3,6 +3,8 @@ package websocket
 import (
 	"log"
 	"sync"
+
+	"github.com/Adopten123/banking-system/service-community/internal/config"
 )
 
 type Hub struct {
@@ -10,13 +12,15 @@ type Hub struct {
 	clients    map[string]*Client
 	register   chan *Client
 	unregister chan *Client
+	cfg        config.WebSocketConfig
 }
 
-func NewHub() *Hub {
+func NewHub(cfg config.WebSocketConfig) *Hub {
 	return &Hub{
 		clients:    make(map[string]*Client),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
+		cfg:        cfg,
 	}
 }
 

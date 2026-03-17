@@ -8,13 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	writeWait      = 10 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 4096
-)
-
 type Client struct {
 	Hub    *Hub
 	Conn   *websocket.Conn
@@ -28,11 +21,11 @@ func (c *Client) ReadPump() {
 		c.Conn.Close()
 	}()
 
-	c.Conn.SetReadLimit(maxMessageSize)
+	c.Conn.SetReadLimit(c.Hub.cfg.MaxMessageSize)
 
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetReadDeadline(time.Now().Add(c.Hub.cfg.PongWait))
 	c.Conn.SetPongHandler(func(string) error {
-		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		c.Conn.SetReadDeadline(time.Now().Add(c.Hub.cfg.PongWait))
 		return nil
 	})
 
@@ -46,14 +39,14 @@ func (c *Client) ReadPump() {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, []byte{'\n'}, []byte{' '}, -1))
-
-		// TODO: parsing inputed messages
 		log.Printf("Received message from user %s: %s", c.UserID, string(message))
 	}
 }
 
 func (c *Client) WritePump() {
+	pingPeriod := (c.Hub.cfg.PongWait * 9) / 10
 	ticker := time.NewTicker(pingPeriod)
+
 	defer func() {
 		ticker.Stop()
 		c.Conn.Close()
@@ -62,7 +55,7 @@ func (c *Client) WritePump() {
 	for {
 		select {
 		case message, ok := <-c.Send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Conn.SetWriteDeadline(time.Now().Add(c.Hub.cfg.WriteWait))
 			if !ok {
 				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
@@ -85,7 +78,7 @@ func (c *Client) WritePump() {
 			}
 
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.Conn.SetWriteDeadline(time.Now().Add(c.Hub.cfg.WriteWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

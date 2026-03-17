@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -13,6 +14,13 @@ type Config struct {
 	DB       DBConfig       `yaml:"db"`
 	Redis    RedisConfig    `yaml:"redis"`
 	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
+	WebSocket WebSocketConfig `yaml:"websocket"`
+}
+
+type WebSocketConfig struct {
+	MaxMessageSize int64         `yaml:"max_message_size" env-default:"4096"`
+	PongWait       time.Duration `yaml:"pong_wait" env-default:"60s"`
+	WriteWait      time.Duration `yaml:"write_wait" env-default:"10s"`
 }
 
 type HTTPConfig struct {
