@@ -1,5 +1,20 @@
 basePath: /
 definitions:
+  github_com_Adopten123_banking-system_service-community_internal_domain.Chat:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      last_message_at:
+        type: string
+      title:
+        type: string
+      type_id:
+        type: integer
+    type: object
   github_com_Adopten123_banking-system_service-community_internal_domain.Post:
     properties:
       authorID:
@@ -36,6 +51,18 @@ definitions:
       updatedAt:
         type: string
     type: object
+  internal_handler_http.CreateChatRequest:
+    properties:
+      member_ids:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      type_id:
+        description: 1 - private, 2 - group
+        type: integer
+    type: object
   internal_handler_http.CreatePostRequest:
     properties:
       author_id:
@@ -63,8 +90,7 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: Социальное ядро экосистемы Banking System. Отвечает за посты, ленту
-    и мессенджер.
+  description: Social Network of Banking System
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -72,6 +98,40 @@ info:
   title: Community Service API
   version: "1.0"
 paths:
+  /api/v1/chats:
+    post:
+      consumes:
+      - application/json
+      description: Making chat and add memers
+      parameters:
+      - description: Data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_http.CreateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-community_internal_domain.Chat'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Make new chat
+      tags:
+      - chats
   /api/v1/posts:
     post:
       consumes:

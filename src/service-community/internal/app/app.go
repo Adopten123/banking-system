@@ -38,6 +38,7 @@ func Run(cfg *config.Config) {
 
 	chatRepo := postgres.NewChatRepository(queries)
 	chatService := service.NewChatService(chatRepo)
+	chatHandler := transport.NewChatHandler(chatService)
 
 	ssoConsumer, err := deliveryRMQ.NewSSOConsumer(cfg.RabbitMQ.URL, profileService)
 	if err != nil {
@@ -59,7 +60,7 @@ func Run(cfg *config.Config) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	setupRoutes(r, wsHandler, postHandler)
+	setupRoutes(r, wsHandler, postHandler, chatHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.HTTP.Port)
 	server := &http.Server{
@@ -81,7 +82,12 @@ func Run(cfg *config.Config) {
 	)
 }
 
-func setupRoutes(r chi.Router, wsHandler *deliveryWS.WSHandler, postHandler *transport.PostHandler) {
+func setupRoutes(
+	r chi.Router,
+	wsHandler *deliveryWS.WSHandler,
+	postHandler *transport.PostHandler,
+	chatHandler *transport.ChatHandler,
+) {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -93,4 +99,5 @@ func setupRoutes(r chi.Router, wsHandler *deliveryWS.WSHandler, postHandler *tra
 	r.Get("/api/v1/ws", wsHandler.ServeWS)
 
 	postHandler.RegisterRoutes(r)
+	chatHandler.RegisterRoutes(r)
 }

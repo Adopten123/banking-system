@@ -24,6 +24,58 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/chats": {
+            "post": {
+                "description": "Making chat and add memers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chats"
+                ],
+                "summary": "Make new chat",
+                "parameters": [
+                    {
+                        "description": "Data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.CreateChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-community_internal_domain.Chat"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/posts": {
             "post": {
                 "description": "Creating new post in community (news, user-post или invest-idea)",
@@ -72,6 +124,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_Adopten123_banking-system_service-community_internal_domain.Chat": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_message_at": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_Adopten123_banking-system_service-community_internal_domain.Post": {
             "type": "object",
             "properties": {
@@ -124,6 +199,24 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler_http.CreateChatRequest": {
+            "type": "object",
+            "properties": {
+                "member_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type_id": {
+                    "description": "1 - private, 2 - group",
+                    "type": "integer"
+                }
+            }
+        },
         "internal_handler_http.CreatePostRequest": {
             "type": "object",
             "properties": {
@@ -164,7 +257,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Community Service API",
-	Description:      "Социальное ядро экосистемы Banking System. Отвечает за посты, ленту и мессенджер.",
+	Description:      "Social Network of Banking System",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

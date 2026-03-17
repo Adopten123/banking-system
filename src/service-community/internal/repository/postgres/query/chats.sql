@@ -35,3 +35,12 @@ WHERE chat_id = $1
   AND deleted_at IS NULL
 ORDER BY created_at DESC LIMIT $2
 OFFSET $3;
+
+-- name: CreateChat :one
+INSERT INTO chats (type_id, title, avatar_url)
+VALUES ($1, $2, $3)
+    RETURNING *;
+
+-- name: AddChatMember :exec
+INSERT INTO chat_members (chat_id, user_id, role)
+VALUES ($1, $2, $3);

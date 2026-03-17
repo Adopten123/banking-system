@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addChatMember = `-- name: AddChatMember :exec
+INSERT INTO chat_members (chat_id, user_id, role)
+VALUES ($1, $2, $3)
+`
+
+type AddChatMemberParams struct {
+	ChatID pgtype.UUID `json:"chat_id"`
+	UserID pgtype.UUID `json:"user_id"`
+	Role   string      `json:"role"`
+}
+
+func (q *Queries) AddChatMember(ctx context.Context, arg AddChatMemberParams) error {
+	_, err := q.db.Exec(ctx, addChatMember, arg.ChatID, arg.UserID, arg.Role)
+	return err
+}
+
+const createChat = `-- name: CreateChat :one
+INSERT INTO chats (type_id, title, avatar_url)
+VALUES ($1, $2, $3)
+    RETURNING id, type_id, title, avatar_url, last_message_at, created_at
+`
+
+type CreateChatParams struct {
+	TypeID    int32       `json:"type_id"`
+	Title     pgtype.Text `json:"title"`
+	AvatarUrl pgtype.Text `json:"avatar_url"`
+}
+
+func (q *Queries) CreateChat(ctx context.Context, arg CreateChatParams) (Chat, error) {
+	row := q.db.QueryRow(ctx, createChat, arg.TypeID, arg.Title, arg.AvatarUrl)
+	var i Chat
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.Title,
+		&i.AvatarUrl,
+		&i.LastMessageAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createMessage = `-- name: CreateMessage :one
 INSERT INTO messages (chat_id,
                       sender_id,
