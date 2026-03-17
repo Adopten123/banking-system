@@ -36,6 +36,9 @@ func Run(cfg *config.Config) {
 	profileRepo := postgres.NewProfileRepository(queries)
 	profileService := service.NewProfileService(profileRepo)
 
+	chatRepo := postgres.NewChatRepository(queries)
+	chatService := service.NewChatService(chatRepo)
+
 	ssoConsumer, err := deliveryRMQ.NewSSOConsumer(cfg.RabbitMQ.URL, profileService)
 	if err != nil {
 		log.Fatalf("Failed to initialize RabbitMQ consumer: %v", err)
@@ -48,7 +51,7 @@ func Run(cfg *config.Config) {
 		WriteWait:      10 * time.Second,
 	}
 
-	hub := deliveryWS.NewHub(wsConfig)
+	hub := deliveryWS.NewHub(wsConfig, chatService)
 	go hub.Run()
 	wsHandler := deliveryWS.NewWSHandler(hub)
 

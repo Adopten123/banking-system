@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/Adopten123/banking-system/service-community/internal/config"
+	"github.com/Adopten123/banking-system/service-community/internal/domain"
 )
 
 type Hub struct {
@@ -13,14 +14,21 @@ type Hub struct {
 	register   chan *Client
 	unregister chan *Client
 	cfg        config.WebSocketConfig
+
+	chatService domain.ChatService
 }
 
-func NewHub(cfg config.WebSocketConfig) *Hub {
+func NewHub(
+	cfg config.WebSocketConfig,
+	chatService domain.ChatService,
+) *Hub {
+
 	return &Hub{
-		clients:    make(map[string]*Client),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		cfg:        cfg,
+		clients:     make(map[string]*Client),
+		register:    make(chan *Client),
+		unregister:  make(chan *Client),
+		cfg:         cfg,
+		chatService: chatService,
 	}
 }
 
