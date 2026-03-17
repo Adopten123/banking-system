@@ -51,6 +51,25 @@ definitions:
       updatedAt:
         type: string
     type: object
+  github_com_Adopten123_banking-system_service-community_internal_domain.Report:
+    properties:
+      createdAt:
+        type: string
+      id:
+        format: int64
+        type: integer
+      reason:
+        type: string
+      reporterID:
+        type: string
+      status:
+        type: string
+      targetID:
+        format: int64
+        type: integer
+      targetType:
+        type: string
+    type: object
   internal_handler_http.CreateChatRequest:
     properties:
       member_ids:
@@ -84,6 +103,15 @@ definitions:
         example: invalid request body
         type: string
     type: object
+  internal_handler_http.ReportRequest:
+    properties:
+      reason:
+        type: string
+      target_id:
+        type: integer
+      target_type:
+        type: string
+    type: object
 host: localhost:8083
 info:
   contact:
@@ -102,9 +130,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Making chat and add memers
+      description: Создает чат (приватный или группу) и добавляет в него участников
       parameters:
-      - description: Data
+      - description: UUID текущего пользователя (имитация авторизации)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Данные чата
         in: body
         name: input
         required: true
@@ -129,7 +162,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Make new chat
+      summary: Создать новый чат
       tags:
       - chats
   /api/v1/posts:
@@ -162,4 +195,139 @@ paths:
       summary: Create new post
       tags:
       - posts
+  /api/v1/posts/{id}/like:
+    delete:
+      description: Removes the current user's like from a post
+      parameters:
+      - description: UUID of the current user (mock authorization)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Successfully unliked
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+      summary: Unlike a post
+      tags:
+      - social
+    post:
+      description: Likes a post on behalf of the current user
+      parameters:
+      - description: UUID of the current user (mock authorization)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Successfully liked
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+      summary: Like a post
+      tags:
+      - social
+  /api/v1/reports:
+    post:
+      consumes:
+      - application/json
+      description: Creates a report for content (post, comment, message, user)
+      parameters:
+      - description: UUID of the current user (mock authorization)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Report data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_http.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Adopten123_banking-system_service-community_internal_domain.Report'
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+      summary: File a report
+      tags:
+      - social
+  /api/v1/users/{id}/follow:
+    delete:
+      description: Unfollows another user from the current user's account
+      parameters:
+      - description: UUID of the current user (mock authorization)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: UUID of the user to unfollow
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Successfully unfollowed
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+      summary: Unfollow a user
+      tags:
+      - social
+    post:
+      description: Follows another user from the current user's account
+      parameters:
+      - description: UUID of the current user (mock authorization)
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: UUID of the user to follow
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Successfully followed
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+      summary: Follow a user
+      tags:
+      - social
 swagger: "2.0"

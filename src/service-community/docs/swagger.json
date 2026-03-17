@@ -20,7 +20,7 @@
     "paths": {
         "/api/v1/chats": {
             "post": {
-                "description": "Making chat and add memers",
+                "description": "Создает чат (приватный или группу) и добавляет в него участников",
                 "consumes": [
                     "application/json"
                 ],
@@ -30,10 +30,17 @@
                 "tags": [
                     "chats"
                 ],
-                "summary": "Make new chat",
+                "summary": "Создать новый чат",
                 "parameters": [
                     {
-                        "description": "Data",
+                        "type": "string",
+                        "description": "UUID текущего пользователя (имитация авторизации)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные чата",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -115,6 +122,208 @@
                     }
                 }
             }
+        },
+        "/api/v1/posts/{id}/like": {
+            "post": {
+                "description": "Likes a post on behalf of the current user",
+                "tags": [
+                    "social"
+                ],
+                "summary": "Like a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of the current user (mock authorization)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully liked"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes the current user's like from a post",
+                "tags": [
+                    "social"
+                ],
+                "summary": "Unlike a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of the current user (mock authorization)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unliked"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports": {
+            "post": {
+                "description": "Creates a report for content (post, comment, message, user)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "social"
+                ],
+                "summary": "File a report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of the current user (mock authorization)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Report data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_http.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Adopten123_banking-system_service-community_internal_domain.Report"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/follow": {
+            "post": {
+                "description": "Follows another user from the current user's account",
+                "tags": [
+                    "social"
+                ],
+                "summary": "Follow a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of the current user (mock authorization)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UUID of the user to follow",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully followed"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Unfollows another user from the current user's account",
+                "tags": [
+                    "social"
+                ],
+                "summary": "Unfollow a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of the current user (mock authorization)",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UUID of the user to unfollow",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unfollowed"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -193,6 +402,34 @@
                 }
             }
         },
+        "github_com_Adopten123_banking-system_service-community_internal_domain.Report": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reporterID": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetID": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "targetType": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler_http.CreateChatRequest": {
             "type": "object",
             "properties": {
@@ -238,6 +475,20 @@
                 "message": {
                     "type": "string",
                     "example": "invalid request body"
+                }
+            }
+        },
+        "internal_handler_http.ReportRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "target_id": {
+                    "type": "integer"
+                },
+                "target_type": {
+                    "type": "string"
                 }
             }
         }

@@ -44,3 +44,6 @@ VALUES ($1, $2, $3)
 -- name: AddChatMember :exec
 INSERT INTO chat_members (chat_id, user_id, role)
 VALUES ($1, $2, $3);
+
+-- name: GetChatMemberIDs :many
+SELECT user_id FROM chat_members WHERE chat_id = $1;

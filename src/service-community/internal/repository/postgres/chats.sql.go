@@ -118,6 +118,30 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 	return i, err
 }
 
+const getChatMemberIDs = `-- name: GetChatMemberIDs :many
+SELECT user_id FROM chat_members WHERE chat_id = $1
+`
+
+func (q *Queries) GetChatMemberIDs(ctx context.Context, chatID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, getChatMemberIDs, chatID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var user_id pgtype.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getChatMessages = `-- name: GetChatMessages :many
 SELECT id,
        chat_id,

@@ -36,9 +36,18 @@ func Run(cfg *config.Config) {
 	profileRepo := postgres.NewProfileRepository(queries)
 	profileService := service.NewProfileService(profileRepo)
 
+	transferPublisher, err := deliveryRMQ.NewTransferPublisher(cfg.RabbitMQ.URL)
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ publisher: %v", err)
+	}
+
 	chatRepo := postgres.NewChatRepository(queries)
-	chatService := service.NewChatService(chatRepo)
+	chatService := service.NewChatService(chatRepo, transferPublisher)
 	chatHandler := transport.NewChatHandler(chatService)
+
+	socialRepo := postgres.NewSocialRepository(queries)
+	socialService := service.NewSocialService(socialRepo)
+	socialHandler := transport.NewSocialHandler(socialService)
 
 	ssoConsumer, err := deliveryRMQ.NewSSOConsumer(cfg.RabbitMQ.URL, profileService)
 	if err != nil {
@@ -60,7 +69,7 @@ func Run(cfg *config.Config) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	setupRoutes(r, wsHandler, postHandler, chatHandler)
+	setupRoutes(r, wsHandler, postHandler, chatHandler, socialHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.HTTP.Port)
 	server := &http.Server{
@@ -87,6 +96,7 @@ func setupRoutes(
 	wsHandler *deliveryWS.WSHandler,
 	postHandler *transport.PostHandler,
 	chatHandler *transport.ChatHandler,
+	socialHandler *transport.SocialHandler,
 ) {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -100,4 +110,5 @@ func setupRoutes(
 
 	postHandler.RegisterRoutes(r)
 	chatHandler.RegisterRoutes(r)
+	socialHandler.RegisterRoutes(r)
 }

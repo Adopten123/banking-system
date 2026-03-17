@@ -14,3 +14,16 @@ func (r *chatRepository) AddChatMember(ctx context.Context, chatID, userID uuid.
 		Role:   role,
 	})
 }
+
+func (r *chatRepository) GetChatMemberIDs(ctx context.Context, chatID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := r.q.GetChatMemberIDs(ctx, pgtype.UUID{Bytes: chatID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	var members []uuid.UUID
+	for _, row := range rows {
+		members = append(members, row.Bytes)
+	}
+	return members, nil
+}

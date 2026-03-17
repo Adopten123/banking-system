@@ -5,9 +5,10 @@ import (
 )
 
 type chatService struct {
-	repo domain.ChatRepository
+	repo      domain.ChatRepository
+	publisher domain.TransferPublisher
 }
 
-func NewChatService(repo domain.ChatRepository) domain.ChatService {
-	return &chatService{repo: repo}
+func NewChatService(repo domain.ChatRepository, publisher domain.TransferPublisher) domain.ChatService {
+	return &chatService{repo: repo, publisher: publisher}
 }
