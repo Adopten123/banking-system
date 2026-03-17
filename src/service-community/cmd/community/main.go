@@ -1,27 +1,16 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"net/http"
-	"time"
 
 	_ "github.com/Adopten123/banking-system/service-community/docs"
 	"github.com/Adopten123/banking-system/service-community/internal/app"
 	"github.com/Adopten123/banking-system/service-community/internal/config"
-	deliveryRMQ "github.com/Adopten123/banking-system/service-community/internal/delivery/rabbitmq"
-	transport "github.com/Adopten123/banking-system/service-community/internal/handler/http"
-	"github.com/Adopten123/banking-system/service-community/internal/repository/postgres"
-	"github.com/Adopten123/banking-system/service-community/internal/service"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // @title           Community Service API
 // @version         1.0
-// @description     Социальное ядро экосистемы Banking System. Отвечает за посты, ленту и мессенджер.
+// @description     Social Network of Banking System
 // @termsOfService  http://swagger.io/terms/
 
 // @contact.name   API Support
@@ -34,6 +23,7 @@ import (
 // @host      localhost:8083
 // @BasePath  /
 func main() {
+	// Read cfg
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Fatal error loading config: %v", err)
@@ -41,63 +31,6 @@ func main() {
 
 	log.Printf("Starting Community Service in [%s] mode...", cfg.Env)
 
-	ctx := context.Background()
-
-	// Init DB
-	dbPool := app.InitPostgres(ctx, cfg.DB.URL)
-	defer dbPool.Close()
-
-	queries := postgres.New(dbPool)
-
-	postRepo := postgres.NewPostRepository(queries)
-	postService := service.NewPostService(postRepo)
-	postHandler := transport.NewPostHandler(postService)
-
-	profileRepo := postgres.NewProfileRepository(queries)
-	profileService := service.NewProfileService(profileRepo)
-
-	ssoConsumer, err := deliveryRMQ.NewSSOConsumer(cfg.RabbitMQ.URL, profileService)
-	if err != nil {
-		log.Fatalf("Failed to initialize RabbitMQ consumer: %v", err)
-	}
-
-	ssoConsumer.Start(ctx)
-
-	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
-
-	postHandler.RegisterRoutes(r)
-
-	// HTTP server
-	addr := fmt.Sprintf(":%d", cfg.HTTP.Port)
-	server := &http.Server{
-		Addr:    addr,
-		Handler: r,
-	}
-
-	// Run server
-	go func() {
-		log.Printf("HTTP server is listening on %s", addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
-		}
-	}()
-
-	// Graceful Shutdown
-	app.GracefulShutdown(
-		5*time.Second,
-		"Community Service",
-		server.Shutdown,
-	)
+	// Run service
+	app.Run(cfg)
 }
