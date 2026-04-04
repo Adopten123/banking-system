@@ -58,6 +58,11 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   db-migration:
     image: migrate/migrate
@@ -127,7 +132,7 @@ services:
       - "8086:8086"
     depends_on:
       rabbitmq:
-        condition: service_started
+        condition: service_healthy # <-- Исправлено
     restart: unless-stopped
 
   service-account:
@@ -150,6 +155,8 @@ services:
         condition: service_started
       db-migration:
         condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
   service-notification:
@@ -161,7 +168,8 @@ services:
       - CONFIG_PATH=config/local.yaml
       - RABBITMQ_URL=amqp://rmq_admin:secretpassword@rabbitmq:5672/
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
   service-community:
@@ -182,7 +190,7 @@ services:
       redis:
         condition: service_started
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
 
   api-gateway:
